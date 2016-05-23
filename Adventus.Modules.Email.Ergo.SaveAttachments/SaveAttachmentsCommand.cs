@@ -38,6 +38,7 @@ namespace Adventus.Modules.Email.Ergo.SaveAttachments
         public SaveAttachmentsViewModel Model { get; set; }
         public IInteraction interaction { get; set; }
         public IInteractionEmail interactionEmail { get; set; }
+		public const int MAX_SUBJECT_LENGTH = 20;
         
         public SaveAttachmentsCommand(IObjectContainer container, ILogger logger)
         {
@@ -155,9 +156,11 @@ namespace Adventus.Modules.Email.Ergo.SaveAttachments
         {
             try
             {
-                string defaultDirectory = Path.GetTempPath();
-//                string str = string.Format(@"{0}{1}", defaultDirectory, attachmentGraphic.DocumentId);
-                string str = string.Format(@"{0}{1}", defaultDirectory, interaction.EntrepriseInteractionCurrent.Id);
+
+				string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+				string subj = (interaction.GetAttachedData("Subject") ?? "Empty Subject").ToString();
+				if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0,MAX_SUBJECT_LENGTH);
+                string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
                 attachmentGraphic.DirectoryFullName = str;
                 string path = Path.Combine(str, attachmentGraphic.GetValidFileName());
                 if(!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
@@ -218,13 +221,15 @@ namespace Adventus.Modules.Email.Ergo.SaveAttachments
         {
             try
             {
-                string defaultDirectory = Path.GetTempPath();
-                string str = string.Format(@"{0}{1}", defaultDirectory, interaction.EntrepriseInteractionCurrent.Id);
+                string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+				string subj = (interaction.GetAttachedData("Subject") ?? "Empty Subject").ToString();
+				if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0,MAX_SUBJECT_LENGTH);
+                string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
                 string path;
                 if(!isStructured)
-                    path = Path.Combine(str, "kcemail.txt");
+                    path = Path.Combine(str, "email.txt");
                 else
-                    path = Path.Combine(str, "kcemail.html");
+                    path = Path.Combine(str, "email.html");
                 if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
 
                 if (File.Exists(path))   /**< don't download attachment if it's already on disk */
