@@ -159,7 +159,7 @@ namespace Adventus.Modules.Email.Ergo.SaveAttachments
 
 				string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 				//string subj = (interaction.GetAttachedData("Subject") ?? "Empty Subject").ToString();
-				string subj = interactionEmail.EntrepriseEmailInteractionCurrent.Subject;
+				string subj = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "Empty Subject";
 				if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0,MAX_SUBJECT_LENGTH);
                 string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
                 attachmentGraphic.DirectoryFullName = str;
@@ -224,7 +224,7 @@ namespace Adventus.Modules.Email.Ergo.SaveAttachments
             {
                 string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 				//string subj = (interaction.GetAttachedData("Subject") ?? "Empty Subject").ToString();
-				string subj = interactionEmail.EntrepriseEmailInteractionCurrent.Subject;
+				string subj = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "Empty Subject";
 				if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0,MAX_SUBJECT_LENGTH);
                 string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
                 string path;
