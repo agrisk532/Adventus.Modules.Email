@@ -130,7 +130,8 @@ namespace Adventus.Modules.Email.Ergo.SaveAttachments
                     sb.AppendLine(Environment.NewLine);
                     sb.Append("From: " + interaction.GetAttachedData("FromAddress"));
                     sb.AppendLine(Environment.NewLine);
-                    sb.Append("Subject: " + interaction.GetAttachedData("Subject"));
+                    //sb.Append("Subject: " + interaction.GetAttachedData("Subject"));
+					sb.Append("Subject: " + interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "");
                     sb.AppendLine(Environment.NewLine);
                     sb.Append("Email parts: ");
                     sb.AppendLine(Environment.NewLine);
