@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Adventus.Modules.Email.Ergo.SaveAttachments")]
+[assembly: AssemblyTitle("Adventus.Modules.Email")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Adventus.Modules.Email.Ergo.SaveAttachments")]
+[assembly: AssemblyProduct("Adventus.Modules.Email")]
 [assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("A2F62988-C0F3-4B57-A658-E394207E7888")]
+[assembly: Guid("E4211D3E-A27A-4F71-9DA6-3A35DAC247F1")]
 
 // Version information for an assembly consists of the following four values:
 //
