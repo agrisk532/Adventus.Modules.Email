@@ -68,6 +68,12 @@ namespace Adventus.Modules.Email
                     new CommandActivator() { CommandType = typeof(SaveAttachmentsCommand), Name = "SaveAttachments"}
                 }
             );
+            commandManager.InsertCommandToChainOfCommandBefore("InteractionEmailSend", "Send", new List<CommandActivator>()
+                {
+                    new CommandActivator() { CommandType = typeof(AttachDataCommand), Name = "AttachData"}
+                }
+            );
+
         }
 
 /** \brief View display condition.

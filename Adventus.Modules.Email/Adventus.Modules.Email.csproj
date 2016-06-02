@@ -93,6 +93,7 @@
     <Compile Include="SaveAttachmentsViewModel.cs" />
     <Compile Include="SaveAttachmentsModule.cs" />
     <Compile Include="SaveAttachmentsView.xaml.cs" />
+    <Compile Include="SendEmailCommand.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Adventus.Modules.Email.module-config">

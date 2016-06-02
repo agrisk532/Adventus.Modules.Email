@@ -11,19 +11,11 @@ using Genesyslab.Enterprise.Model.Contact;
 using Genesyslab.Desktop.Modules.Windows.Views.Common.AttachmentView;
 using Genesyslab.Enterprise.Services;
 using Genesyslab.Enterprise.Model.ServiceModel;
-using Genesyslab.Enterprise.Model;
 using System.IO;
 using System.Text;
 using System.Linq;
-using Genesyslab.Desktop.Modules.Core.SDK.Protocol;
-using Genesyslab.Enterprise.Model.Channel;
 using Genesyslab.Platform.Commons.Protocols;
-using Genesyslab.Enterprise.Commons.Collections;
-using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions;
-using Microsoft.Practices.Unity;
 using Genesyslab.Platform.Commons.Logging;
-using Genesyslab.Desktop.Infrastructure.ExceptionAnalyze;
-using Genesyslab.Desktop.Infrastructure.Events;
 
 namespace Adventus.Modules.Email
 {
