@@ -10,7 +10,7 @@ namespace Adventus.Modules.Email
 /** \class SaveAttachmentsModule
  *  \brief Module for saving email attachments
  */
-    public class AdventusEmailModule : IModule
+    public class Module : IModule
     {
         readonly IObjectContainer container;
         readonly IViewManager viewManager;
@@ -21,7 +21,7 @@ namespace Adventus.Modules.Email
  *  \param viewManager The view manager
  *  \param commandManager The command manager
  */
-        public AdventusEmailModule(IObjectContainer container, IViewManager viewManager, ICommandManager commandManager)
+        public Module(IObjectContainer container, IViewManager viewManager, ICommandManager commandManager)
         {
             this.container = container;
             this.viewManager = viewManager;
@@ -67,7 +67,7 @@ namespace Adventus.Modules.Email
                     new CommandActivator() { CommandType = typeof(SaveAttachmentsCommand), Name = "SaveAttachments"}
                 }
             );
-            commandManager.InsertCommandToChainOfCommandBefore("InteractionEmailSend", "Send", new List<CommandActivator>()
+            commandManager.InsertCommandToChainOfCommandBefore("InteractionEmailSend", "RequestSaveNotepad", new List<CommandActivator>()
                 {
                     new CommandActivator() { CommandType = typeof(AttachDataCommand), Name = "AttachData"}
                 }
