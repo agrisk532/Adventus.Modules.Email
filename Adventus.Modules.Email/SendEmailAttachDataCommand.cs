@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
+using System.Threading;
 using System.Windows.Threading;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
@@ -88,7 +89,7 @@ namespace Adventus.Modules.Email
                 }
                 else
                 {
-                    interaction.SetAttachedData("_Sending", 1); 
+                    interaction.SetAttachedData("_Sending", 1);
 					return false;
 				}
             }
