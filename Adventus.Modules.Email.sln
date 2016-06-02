@@ -3,14 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adventus.Modules.Email.Ergo.SaveAttachments", "Adventus.Modules.Email.Ergo.SaveAttachments\Adventus.Modules.Email.Ergo.SaveAttachments.csproj", "{9BFC954C-1357-4E2D-975C-7CB2983EEF25}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adventus.Modules.Email", "Adventus.Modules.Email\Adventus.Modules.Email.csproj", "{9BFC954C-1357-4E2D-975C-7CB2983EEF25}"
 EndProject
-Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "InteractionWorkspace", "Adventus.Modules.Email.Ergo.SaveAttachments\bin\Debug\InteractionWorkspace.exe", "{16F29DB3-2034-4C37-92DD-D198725C3300}"
+Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "InteractionWorkspace", "Adventus.Modules.Email\bin\Debug\InteractionWorkspace.exe", "{12072F0D-6292-43C4-BB94-709D38EA0544}"
 	ProjectSection(DebuggerProjectSystem) = preProject
 		PortSupplier = 00000000-0000-0000-0000-000000000000
-		Executable = C:\Users\agrisk\Documents\GCTI_Devel\Ergo_IW_Custom\Adventus.Modules.Email.Ergo\Adventus.Modules.Email.Ergo.SaveAttachments\bin\Debug\InteractionWorkspace.exe
+		Executable = C:\Users\agrisk\Documents\GCTI_Devel\Ergo_IW_Custom\Adventus.Modules.Email\Adventus.Modules.Email\bin\Debug\InteractionWorkspace.exe
 		RemoteMachine = AGRIS-HP
-		StartingDirectory = C:\Users\agrisk\Documents\GCTI_Devel\Ergo_IW_Custom\Adventus.Modules.Email.Ergo\Adventus.Modules.Email.Ergo.SaveAttachments\bin\Debug
+		StartingDirectory = C:\Users\agrisk\Documents\GCTI_Devel\Ergo_IW_Custom\Adventus.Modules.Email\Adventus.Modules.Email\bin\Debug
 		Environment = Default
 		LaunchingEngine = 00000000-0000-0000-0000-000000000000
 		UseLegacyDebugEngines = No
@@ -34,10 +34,10 @@ Global
 		{9BFC954C-1357-4E2D-975C-7CB2983EEF25}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9BFC954C-1357-4E2D-975C-7CB2983EEF25}.Release|x86.ActiveCfg = Release|Any CPU
 		{9BFC954C-1357-4E2D-975C-7CB2983EEF25}.Release|x86.Build.0 = Release|Any CPU
-		{16F29DB3-2034-4C37-92DD-D198725C3300}.Debug|Any CPU.ActiveCfg = Release|x86
-		{16F29DB3-2034-4C37-92DD-D198725C3300}.Debug|x86.ActiveCfg = Release|x86
-		{16F29DB3-2034-4C37-92DD-D198725C3300}.Release|Any CPU.ActiveCfg = Release|x86
-		{16F29DB3-2034-4C37-92DD-D198725C3300}.Release|x86.ActiveCfg = Release|x86
+		{12072F0D-6292-43C4-BB94-709D38EA0544}.Debug|Any CPU.ActiveCfg = Release|x86
+		{12072F0D-6292-43C4-BB94-709D38EA0544}.Debug|x86.ActiveCfg = Release|x86
+		{12072F0D-6292-43C4-BB94-709D38EA0544}.Release|Any CPU.ActiveCfg = Release|x86
+		{12072F0D-6292-43C4-BB94-709D38EA0544}.Release|x86.ActiveCfg = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

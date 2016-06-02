@@ -25,7 +25,7 @@ using Genesyslab.Platform.Commons.Logging;
 using Genesyslab.Desktop.Infrastructure.ExceptionAnalyze;
 using Genesyslab.Desktop.Infrastructure.Events;
 
-namespace Adventus.Modules.Email.Ergo.SaveAttachments
+namespace Adventus.Modules.Email
 {
 /** \class SaveAttachmentsCommand
  *  \brief Saves email attachments to disk

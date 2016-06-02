@@ -7,8 +7,8 @@
     <ProjectGuid>{9BFC954C-1357-4E2D-975C-7CB2983EEF25}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Adventus.Modules.Email.Ergo.SaveAttachments</RootNamespace>
-    <AssemblyName>Adventus.Modules.Email.Ergo.SaveAttachments</AssemblyName>
+    <RootNamespace>Adventus.Modules.Email</RootNamespace>
+    <AssemblyName>Adventus.Modules.Email</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -95,7 +95,7 @@
     <Compile Include="SaveAttachmentsView.xaml.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Adventus.Modules.Email.Ergo.SaveAttachments.module-config">
+    <None Include="Adventus.Modules.Email.module-config">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
@@ -111,7 +111,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>xcopy "$(ProjectDir)..\..\..\InteractionWorkspace_v85" "$(TargetDir)" /y /i /s
-copy "$(ProjectDir)\Adventus.Modules.Email.Ergo.SaveAttachments.module-config" "$(TargetDir)"</PreBuildEvent>
+copy "$(ProjectDir)\Adventus.Modules.Email.module-config" "$(TargetDir)"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

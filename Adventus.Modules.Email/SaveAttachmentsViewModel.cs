@@ -7,7 +7,7 @@ using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 
-namespace Adventus.Modules.Email.Ergo.SaveAttachments
+namespace Adventus.Modules.Email
 {
 /** \class SaveAttachmentsViewModel
  *  \brief presentation logic for SaveAttachmentsView

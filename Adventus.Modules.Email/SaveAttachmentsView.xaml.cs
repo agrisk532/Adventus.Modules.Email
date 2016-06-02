@@ -10,7 +10,7 @@ using Genesyslab.Desktop.Modules.OpenMedia.Windows.Interactions.MediaView.Email.
 using Genesyslab.Desktop.WPFCommon;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 
-namespace Adventus.Modules.Email.Ergo.SaveAttachments
+namespace Adventus.Modules.Email
 {
 /** \class SaveAttachmentsView
  *  \brief Interaction logic for SaveAttachmentsView.xaml

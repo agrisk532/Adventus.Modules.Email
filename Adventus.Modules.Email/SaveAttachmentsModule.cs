@@ -6,7 +6,7 @@ using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
 using System.Collections.Generic;
 
-namespace Adventus.Modules.Email.Ergo.SaveAttachments
+namespace Adventus.Modules.Email
 {
 /** \class SaveAttachmentsModule
  *  \brief Module for saving email attachments
