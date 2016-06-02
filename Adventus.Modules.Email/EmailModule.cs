@@ -3,7 +3,6 @@ using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Infrastructure.ViewManager;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
-using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
 using System.Collections.Generic;
 
 namespace Adventus.Modules.Email
@@ -11,7 +10,7 @@ namespace Adventus.Modules.Email
 /** \class SaveAttachmentsModule
  *  \brief Module for saving email attachments
  */
-    public class Module : IModule
+    public class AdventusEmailModule : IModule
     {
         readonly IObjectContainer container;
         readonly IViewManager viewManager;
@@ -22,7 +21,7 @@ namespace Adventus.Modules.Email
  *  \param viewManager The view manager
  *  \param commandManager The command manager
  */
-        public Module(IObjectContainer container, IViewManager viewManager, ICommandManager commandManager)
+        public AdventusEmailModule(IObjectContainer container, IViewManager viewManager, ICommandManager commandManager)
         {
             this.container = container;
             this.viewManager = viewManager;

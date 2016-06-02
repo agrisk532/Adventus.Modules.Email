@@ -11,14 +11,14 @@
 				the bootstrap downloads the files in the group 'clickOnceGroupsToDownload' if any,
 				and then, the module in the 'modulesToLoad' list are loaded.
 				'clickOnceGroupsToDownload' and 'modulesToLoad' are a coma separated lists -->
-    <task name="InteractionWorkspace.Email.canUse" clickOnceGroupsToDownload="Contacts,OpenMedia" modulesToLoad="EmailSaveAttachmentsModule" />
+    <task name="InteractionWorkspace.Email.canUse" clickOnceGroupsToDownload="Contacts,OpenMedia" modulesToLoad="AdventusEmailModule" />
   </tasks>
 
   <modules>
     <!-- Load the module if the corresponding task is granted -->
-    <module assemblyFile="Adventus.Modules.Email.Ergo.SaveAttachments.dll"
-				moduleType="Adventus.Modules.Email.Ergo.SaveAttachments.SaveAttachmentsModule"
-				moduleName="EmailSaveAttachmentsModule"
+    <module assemblyFile="Adventus.Modules.Email.dll"
+				moduleType="Adventus.Modules.Email.AdventusEmailModule"
+				moduleName="AdventusEmailModule"
 				startupLoaded="false"/>
   </modules>
 </configuration>
