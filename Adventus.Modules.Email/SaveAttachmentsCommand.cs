@@ -177,13 +177,13 @@ namespace Adventus.Modules.Email
                 }
                 else
                 {
-                    MessageBox.Show("DownloadAttachment is null. Can't downloaded the file {0}", path );
+                    MessageBox.Show(string.Format("DownloadAttachment is null. Can't downloaded the file {0}", path), "Attention");
                     return null;
                 }
             }
             catch (Exception exception)
             {
-                MessageBox.Show("Exception in DownloadAttachment. {0}", exception.ToString());
+                MessageBox.Show(string.Format("Exception in DownloadAttachment. {0}", exception.ToString()), "Attention");
             }
             return null;
         }
@@ -218,6 +218,16 @@ namespace Adventus.Modules.Email
                 string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 				//string subj = (interaction.GetAttachedData("Subject") ?? "Empty Subject").ToString();
 				string subj = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "Empty Subject";
+
+				// remove punctuation from subject
+				var sb = new StringBuilder();
+				foreach (char c in subj)
+				{
+				   if (!char.IsPunctuation(c))
+				      sb.Append(c);
+				}
+				subj = sb.ToString();
+
 				if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0,MAX_SUBJECT_LENGTH);
                 string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
                 string path;
@@ -225,6 +235,7 @@ namespace Adventus.Modules.Email
                     path = Path.Combine(str, "email.txt");
                 else
                     path = Path.Combine(str, "email.html");
+
                 if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
 
                 if (File.Exists(path))   /**< don't download attachment if it's already on disk */
@@ -245,13 +256,13 @@ namespace Adventus.Modules.Email
                 }
                 else
                 {
-                    MessageBox.Show("Email does not contain body. {0}", path);
+                    MessageBox.Show(string.Format("Email does not contain body. {0}", path), "Attention");
                     return null;
                 }
             }
             catch (Exception exception)
             {
-                MessageBox.Show("Exception in SaveMessage. {0}", exception.ToString());
+                MessageBox.Show(string.Format("Exception in SaveMessage. {0}", exception.ToString()), "Attention");
             }
             return null;
         }
