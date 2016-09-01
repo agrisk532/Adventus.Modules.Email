@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adventus.Modules.Email", "Adventus.Modules.Email\Adventus.Modules.Email.csproj", "{9BFC954C-1357-4E2D-975C-7CB2983EEF25}"
 EndProject
-Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "InteractionWorkspace", "Adventus.Modules.Email\bin\Debug\InteractionWorkspace.exe", "{12072F0D-6292-43C4-BB94-709D38EA0544}"
+Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "InteractionWorkspace", "Adventus.Modules.Email\bin\Debug\InteractionWorkspace.exe", "{5CDFB936-DB5A-4BDD-8BAC-FB3C97CA85A2}"
 	ProjectSection(DebuggerProjectSystem) = preProject
 		PortSupplier = 00000000-0000-0000-0000-000000000000
 		Executable = C:\Users\agrisk\Documents\GCTI_Devel\Ergo_IW_Custom\Adventus.Modules.Email\Adventus.Modules.Email\bin\Debug\InteractionWorkspace.exe
@@ -34,10 +34,10 @@ Global
 		{9BFC954C-1357-4E2D-975C-7CB2983EEF25}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9BFC954C-1357-4E2D-975C-7CB2983EEF25}.Release|x86.ActiveCfg = Release|Any CPU
 		{9BFC954C-1357-4E2D-975C-7CB2983EEF25}.Release|x86.Build.0 = Release|Any CPU
-		{12072F0D-6292-43C4-BB94-709D38EA0544}.Debug|Any CPU.ActiveCfg = Release|x86
-		{12072F0D-6292-43C4-BB94-709D38EA0544}.Debug|x86.ActiveCfg = Release|x86
-		{12072F0D-6292-43C4-BB94-709D38EA0544}.Release|Any CPU.ActiveCfg = Release|x86
-		{12072F0D-6292-43C4-BB94-709D38EA0544}.Release|x86.ActiveCfg = Release|x86
+		{5CDFB936-DB5A-4BDD-8BAC-FB3C97CA85A2}.Debug|Any CPU.ActiveCfg = Release
+		{5CDFB936-DB5A-4BDD-8BAC-FB3C97CA85A2}.Debug|x86.ActiveCfg = Release
+		{5CDFB936-DB5A-4BDD-8BAC-FB3C97CA85A2}.Release|Any CPU.ActiveCfg = Release
+		{5CDFB936-DB5A-4BDD-8BAC-FB3C97CA85A2}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
