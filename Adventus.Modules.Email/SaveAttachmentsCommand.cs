@@ -152,7 +152,18 @@ namespace Adventus.Modules.Email
 
 				string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 				//string subj = (interaction.GetAttachedData("Subject") ?? "Empty Subject").ToString();
+
 				string subj = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "Empty Subject";
+
+				// remove punctuation from subject
+				var sb = new StringBuilder();
+				foreach (char c in subj)
+				{
+				   if (!char.IsPunctuation(c))
+				      sb.Append(c);
+				}
+				subj = sb.ToString();
+
 				if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0,MAX_SUBJECT_LENGTH);
                 string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
                 attachmentGraphic.DirectoryFullName = str;
