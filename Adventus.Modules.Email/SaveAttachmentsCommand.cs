@@ -148,63 +148,69 @@ namespace Adventus.Modules.Email
         public string DownloadAttachment(IAttachmentGraphic attachmentGraphic, IInteraction interaction)
         {
             try
-            {
+			{
 
-				string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-				//string subj = (interaction.GetAttachedData("Subject") ?? "Empty Subject").ToString();
+                string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+				string subj = RemoveSpecialChars(interactionEmail.EntrepriseEmailInteractionCurrent.Subject);
 
-				string subj = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "Empty Subject";
+				if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0, MAX_SUBJECT_LENGTH);
+				string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
+				attachmentGraphic.DirectoryFullName = str;
+				string path = Path.Combine(str, attachmentGraphic.GetValidFileName());
+				if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
 
-				// remove punctuation from subject
-				var sb = new StringBuilder();
-				foreach (char c in subj)
+				if (File.Exists(path))   /**< don't download attachment if it's already on disk */
 				{
-				   if (!char.IsPunctuation(c))
-				      sb.Append(c);
+					return path;
 				}
-				subj = sb.ToString();
-
-				if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0,MAX_SUBJECT_LENGTH);
-                string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
-                attachmentGraphic.DirectoryFullName = str;
-                string path = Path.Combine(str, attachmentGraphic.GetValidFileName());
-                if(!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
-
-                if (File.Exists(path))   /**< don't download attachment if it's already on disk */
-                {
-                    return path;
-                }
-                if (!Directory.Exists(str))
-                {
-                    Directory.CreateDirectory(str);
-                }
-                IAttachment attachment = this.LoadAttachment(attachmentGraphic.DocumentId, attachmentGraphic.DataSourceType);
-                if (attachment != null)
-                {
-                    FileStream stream = new FileInfo(path).Open(FileMode.Create, FileAccess.Write);
-                    stream.Write(attachment.Content, 0, attachment.Size.Value);
-                    stream.Close();
-                    return path;
-                }
-                else
-                {
-                    MessageBox.Show(string.Format("DownloadAttachment is null. Can't downloaded the file {0}", path), "Attention");
-                    return null;
-                }
-            }
-            catch (Exception exception)
+				if (!Directory.Exists(str))
+				{
+					Directory.CreateDirectory(str);
+				}
+				IAttachment attachment = this.LoadAttachment(attachmentGraphic.DocumentId, attachmentGraphic.DataSourceType);
+				if (attachment != null)
+				{
+					FileStream stream = new FileInfo(path).Open(FileMode.Create, FileAccess.Write);
+					stream.Write(attachment.Content, 0, attachment.Size.Value);
+					stream.Close();
+					return path;
+				}
+				else
+				{
+					MessageBox.Show(string.Format("DownloadAttachment is null. Can't downloaded the file {0}", path), "Attention");
+					return null;
+				}
+			}
+			catch (Exception exception)
             {
                 MessageBox.Show(string.Format("Exception in DownloadAttachment. {0}", exception.ToString()), "Attention");
             }
             return null;
         }
 
-/** \brief Gets email attachments from the contact server
- *  \param attachmentId global Id of attachment
- *  \param dataSourceType Main or Archive
- *  \return email attachment
- */       
-        private IAttachment LoadAttachment(string attachmentId, DataSourceType dataSourceType)
+		/** \brief removes special and whitespace chars from filename 
+		 *  \param src source string
+		 */
+		private string RemoveSpecialChars(string src)
+		{
+			char[] chars = {'<', '>', ':', '\"', '\'', '/','\\', '|', '?', '*'}; // these chars are not allowed in filenames and path names
+			var sb = new StringBuilder();
+			for (int i = 0; i < src.Length; i++)
+			{
+		        if (!chars.Contains(src[i]))
+					sb.Append(src[i]);
+			}
+			string res = sb.ToString();
+			res = (res.Length > 0 && (!string.IsNullOrWhiteSpace(res))) ? res : "Empty Subject";
+			return res;
+		}
+
+		/** \brief Gets email attachments from the contact server
+		 *  \param attachmentId global Id of attachment
+		 *  \param dataSourceType Main or Archive
+		 *  \return email attachment
+		 */
+		private IAttachment LoadAttachment(string attachmentId, DataSourceType dataSourceType)
         {
             IContactService service = this.container.Resolve<IEnterpriseServiceProvider>().Resolve<IContactService>("contactService");
             Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService service2 = this.container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService>();
@@ -227,17 +233,7 @@ namespace Adventus.Modules.Email
             try
             {
                 string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-				//string subj = (interaction.GetAttachedData("Subject") ?? "Empty Subject").ToString();
-				string subj = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "Empty Subject";
-
-				// remove punctuation from subject
-				var sb = new StringBuilder();
-				foreach (char c in subj)
-				{
-				   if (!char.IsPunctuation(c))
-				      sb.Append(c);
-				}
-				subj = sb.ToString();
+				string subj = RemoveSpecialChars(interactionEmail.EntrepriseEmailInteractionCurrent.Subject);
 
 				if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0,MAX_SUBJECT_LENGTH);
                 string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
