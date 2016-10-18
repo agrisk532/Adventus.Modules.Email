@@ -72,14 +72,7 @@ namespace Adventus.Modules.Email
                 }
                 else
                 {
-// save the message body
-                    string messageText = interactionEmail.EntrepriseEmailInteractionCurrent.MessageText;    /**< without html formatting */
-                    string structuredMessageText = interactionEmail.EntrepriseEmailInteractionCurrent.StructuredText;   /**< with html formatting */
-                    if (messageText != null && messageText.Length != 0) 
-                        SaveMessage(messageText, false);
-                    if (structuredMessageText != null && structuredMessageText.Length != 0) 
-                        SaveMessage(structuredMessageText, true);
-
+					List<string> attachmentNames = new List<string>();	// for adding to message body
                     if ((interactionEmail.EntrepriseEmailAttachments != null) && (interactionEmail.EntrepriseEmailAttachments.Count > 0))
                     {
                         ICollection<IAttachment> attachments = new List<IAttachment>();
@@ -91,7 +84,6 @@ namespace Adventus.Modules.Email
                             .Where(x => x.Count() > 1)
                             .Select(x => x.Key)
                             .ToList();
-
                         foreach (IAttachment attachment in attachments)
                         {
                             if (attachment != null)
@@ -109,12 +101,47 @@ namespace Adventus.Modules.Email
                                 }
                                 item.DocumentSize = attachment.Size.ToString();
                                 DownloadAttachment(item, interaction);
+
+								attachmentNames.Add(attachment.Name); // for adding to message body
                             }
                         }
                     }
 
 //                        KeyValueCollection attachedData = new KeyValueCollection();
 //                        attachedData = interaction.GetAllAttachedData();
+// save the message body
+                    string messageText = interactionEmail.EntrepriseEmailInteractionCurrent.MessageText;    /**< without html formatting */
+                    string structuredMessageText = interactionEmail.EntrepriseEmailInteractionCurrent.StructuredText;   /**< with html formatting */
+					string messageSubject = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
+					string messageFrom = "" + interaction.GetAttachedData("FromAddress") ?? "";
+					string format = "dd.MM.yyyy HH:mm";
+					string messageDate = interactionEmail.EntrepriseEmailInteractionCurrent.StartDate.ToString(format);
+					string messageTo = interactionEmail.EntrepriseEmailInteractionCurrent.Mailbox;
+
+                    if (messageText != null && messageText.Length != 0)
+					{
+						StringBuilder messageTextModified = new StringBuilder();
+						messageTextModified.AppendLine("Subject: " + messageSubject);
+						messageTextModified.AppendLine("From: " + messageFrom);
+						messageTextModified.AppendLine("Date: " + messageDate);
+						messageTextModified.AppendLine("To: " + messageTo);
+						messageTextModified.AppendLine(string.Empty);
+						if(attachmentNames.Count > 0)
+						{
+							messageTextModified.AppendLine("Attachments:");
+							foreach(string attachmentName in attachmentNames)
+							{
+								messageTextModified.AppendLine(attachmentName);
+							}
+							messageTextModified.AppendLine(string.Empty);
+						}
+						messageTextModified.Append(messageText);
+                        SaveMessage(messageTextModified.ToString(), false);
+					}
+                    if (structuredMessageText != null && structuredMessageText.Length != 0)
+					{
+                        SaveMessage(structuredMessageText, true);
+					}
 
                     Model.EmailPartsInfoStored = true;
                     StringBuilder sb = new StringBuilder();
