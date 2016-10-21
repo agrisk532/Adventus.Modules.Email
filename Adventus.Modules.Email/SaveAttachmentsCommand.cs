@@ -73,6 +73,7 @@ namespace Adventus.Modules.Email
                 else
                 {
 					List<string> attachmentNames = new List<string>();	// for adding to message body
+					// download attachments and store in filesystem
                     if ((interactionEmail.EntrepriseEmailAttachments != null) && (interactionEmail.EntrepriseEmailAttachments.Count > 0))
                     {
                         ICollection<IAttachment> attachments = new List<IAttachment>();
@@ -113,12 +114,11 @@ namespace Adventus.Modules.Email
                     string messageText = interactionEmail.EntrepriseEmailInteractionCurrent.MessageText;    /**< without html formatting */
                     string structuredMessageText = interactionEmail.EntrepriseEmailInteractionCurrent.StructuredText;   /**< with html formatting */
 					string messageSubject = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
-					string messageFrom = "" + interaction.GetAttachedData("FromAddress") ?? "";
-					string format = "dd.MM.yyyy HH:mm";
-					string messageDate = interactionEmail.EntrepriseEmailInteractionCurrent.StartDate.ToString(format);
+					string messageFrom = (interaction.GetAttachedData("FromAddress") ?? "").ToString();
+					string messageDate = interactionEmail.EntrepriseEmailInteractionCurrent.StartDate.ToString("dd.MM.yyyy HH:mm");
 					string messageTo = interactionEmail.EntrepriseEmailInteractionCurrent.Mailbox;
 
-                    if (messageText != null && messageText.Length != 0)
+                    if (messageText != null && messageText.Length != 0)		// for plain text messages
 					{
 						StringBuilder messageTextModified = new StringBuilder();
 						messageTextModified.AppendLine("Subject: " + messageSubject);
@@ -136,11 +136,29 @@ namespace Adventus.Modules.Email
 							messageTextModified.AppendLine(string.Empty);
 						}
 						messageTextModified.Append(messageText);
-                        SaveMessage(messageTextModified.ToString(), false);
+                        SaveMessage(messageTextModified.ToString(), false, false);
 					}
-                    if (structuredMessageText != null && structuredMessageText.Length != 0)
+                    if (structuredMessageText != null && structuredMessageText.Length != 0)		// for html messages
 					{
-                        SaveMessage(structuredMessageText, true);
+						StringBuilder messageTextModified = new StringBuilder();
+						messageTextModified.AppendLine("<!DOCTYPE html><html><head><title>" + messageSubject + "</title></head><body><p>");
+						messageTextModified.AppendLine("<b>Subject: </b>" + messageSubject + "<br>");
+						messageTextModified.AppendLine("<b>From: </b>" + messageFrom + "<br>");
+						messageTextModified.AppendLine("<b>Date: </b>" + messageDate + "<br>");
+						messageTextModified.AppendLine("<b>To: </b>" + messageTo + "<br><br>");
+						if(attachmentNames.Count > 0)
+						{
+							messageTextModified.AppendLine("<b>Attachments:</b><br>");
+							foreach(string attachmentName in attachmentNames)
+							{
+								messageTextModified.AppendLine("<a href=\"" + attachmentName + "\">" + attachmentName + "</a><br>");
+							}
+							messageTextModified.AppendLine("<br>");
+						}
+                        SaveMessage(structuredMessageText, true, true);  // save original email body in email.html file
+						messageTextModified.AppendLine("<a href=\"original_email.html\">Original email</a>");
+						messageTextModified.AppendLine("</body></html>");
+						SaveMessage(messageTextModified.ToString(), true, false);  // save modified email body in subject.html file
 					}
 
                     Model.EmailPartsInfoStored = true;
@@ -253,9 +271,10 @@ namespace Adventus.Modules.Email
  *  \param message contains the email body without attachments
  *  \param isStructured true if saving message with (html) formatting (IInteractionEmail.EntrepriseEmailInteractionCurrent.StructuredText),
  *           false if saving plain text message (IInteractionEmail.EntrepriseEmailInteractionCurrent.MessageText)
+ *  \param originalHtmlFile true if saving email in file email.html, false if saving in subject.html file. Subject.html includes <a href='original_email.html'></a>.
  *  \return full path of message on disk
  */
-        public string SaveMessage(string message, bool isStructured)
+        public string SaveMessage(string message, bool isStructured, bool originalHtmlFile)
         {
             try
             {
@@ -266,9 +285,9 @@ namespace Adventus.Modules.Email
                 string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
                 string path;
                 if(!isStructured)
-                    path = Path.Combine(str, "email.txt");
+                    path = Path.Combine(str, subj + ".txt");
                 else
-                    path = Path.Combine(str, "email.html");
+                    path = Path.Combine(str, originalHtmlFile ? "original_email.html" : subj + ".html");
 
                 if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
 
