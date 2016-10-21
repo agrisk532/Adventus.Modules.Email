@@ -128,7 +128,7 @@ namespace Adventus.Modules.Email
 						messageTextModified.AppendLine(string.Empty);
 						if(attachmentNames.Count > 0)
 						{
-							messageTextModified.AppendLine("Attachments:");
+							messageTextModified.AppendLine(String.Format("{0} attachments:", attachmentNames.Count));
 							foreach(string attachmentName in attachmentNames)
 							{
 								messageTextModified.AppendLine(attachmentName);
@@ -148,7 +148,7 @@ namespace Adventus.Modules.Email
 						messageTextModified.AppendLine("<b>To: </b>" + messageTo + "<br><br>");
 						if(attachmentNames.Count > 0)
 						{
-							messageTextModified.AppendLine("<b>Attachments:</b><br>");
+							messageTextModified.AppendLine(String.Format("<b>{0} attachments:</b><br>", attachmentNames.Count));
 							foreach(string attachmentName in attachmentNames)
 							{
 								messageTextModified.AppendLine("<a href=\"" + attachmentName + "\">" + attachmentName + "</a><br>");
