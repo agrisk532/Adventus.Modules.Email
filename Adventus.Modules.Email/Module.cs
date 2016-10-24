@@ -34,6 +34,7 @@ namespace Adventus.Modules.Email
         {
             // Register the view (GUI) "ISaveAttachmentsView" and its behavior counterpart "ISaveAttachmentsViewModel"
             container.RegisterType<ISaveAttachmentsView, SaveAttachmentsView>();
+			container.RegisterType<ISendAndSaveAttachmentsView, SendAndSaveAttachmentsView>();
             container.RegisterType<ISaveAttachmentsViewModel, SaveAttachmentsViewModel>();
 
             // Put the "SaveAttachments" view in the region "BundleCustomButtonRegion" if Condition is true
@@ -60,6 +61,32 @@ namespace Adventus.Modules.Email
  */
             }
             );
+
+            viewManager.ViewsByRegionName["BundleCustomButtonRegion"].Add(new ViewActivator() { ViewType = typeof(ISendAndSaveAttachmentsView), ViewName = "SendAndSaveAttachments", ActivateView = true,
+                Condition = CheckCondition
+/* delegate code moved to the CheckCondition() method to make Visual Studio debugging easier
+                Condition = delegate(ref object context)
+                {
+                    IDictionary<string, object> contextDictionary = context as IDictionary<string, object>;
+                    if (contextDictionary.ContainsKey("Interaction"))
+                    {
+                        IInteraction interaction = contextDictionary["Interaction"] as IInteraction;    
+                        if (interaction != null)
+                        {
+                            if (interaction.EntrepriseInteractionCurrent.IdType.MediaType.ToString() == "Multimedia" &&
+                                interaction.EntrepriseInteractionCurrent.IdType.SubMediaType == "email")
+                            {    
+                                return true;
+                            }
+                        }
+                    }    
+                    return false;
+                }
+ */
+            }
+            );
+
+
             // register commands
             commandManager.CreateChainOfCommandByName("SaveAttachments");
             commandManager.AddCommandToChainOfCommand("SaveAttachments", new List<CommandActivator>()
@@ -67,6 +94,13 @@ namespace Adventus.Modules.Email
                     new CommandActivator() { CommandType = typeof(SaveAttachmentsCommand), Name = "SaveAttachments"}
                 }
             );
+            commandManager.CreateChainOfCommandByName("SendAndSaveAttachments");
+            commandManager.AddCommandToChainOfCommand("SendAndSaveAttachments", new List<CommandActivator>()
+                {
+                    new CommandActivator() { CommandType = typeof(SaveAttachmentsCommand), Name = "SaveAttachments"}
+                }
+            );
+
             commandManager.InsertCommandToChainOfCommandBefore("InteractionEmailSend", "Send", new List<CommandActivator>()
                 {
                     new CommandActivator() { CommandType = typeof(AttachDataCommand), Name = "AttachData"}

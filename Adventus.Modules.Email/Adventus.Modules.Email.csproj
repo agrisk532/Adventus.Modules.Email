@@ -86,6 +86,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ISendAndSaveAttachmentsView.cs" />
     <Compile Include="ISaveAttachmentsView.cs" />
     <Compile Include="ISaveAttachmentsViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -94,6 +95,9 @@
     <Compile Include="Module.cs" />
     <Compile Include="SaveAttachmentsView.xaml.cs" />
     <Compile Include="SendEmailAttachDataCommand.cs" />
+    <Compile Include="SendAndSaveAttachmentsView.xaml.cs">
+      <DependentUpon>SendAndSaveAttachmentsView.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Adventus.Modules.Email.module-config">
@@ -104,6 +108,10 @@
     <Page Include="SaveAttachmentsView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="SendAndSaveAttachmentsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
