@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Threading;
+using System.Collections.ObjectModel;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
@@ -74,17 +75,26 @@ namespace Adventus.Modules.Email
                 {
 					List<string> attachmentNames = new List<string>();	// for adding to message body
 					// download attachments and store in filesystem
-                    if ((interactionEmail.EntrepriseEmailAttachments != null) && (interactionEmail.EntrepriseEmailAttachments.Count > 0))
-                    {
-                        ICollection<IAttachment> attachments = new List<IAttachment>();
+                    //if ((interactionEmail.EntrepriseEmailAttachments != null) && (interactionEmail.EntrepriseEmailAttachments.Count > 0))
+                    //{
+                        ObservableCollection<IAttachmentGraphic> attachments = new ObservableCollection<IAttachmentGraphic>();
                         IContactService service = this.container.Resolve<IEnterpriseServiceProvider>().Resolve<IContactService>("contactService");
 // get attachment names only
-                        attachments = service.GetAttachments(interaction.EntrepriseInteractionCurrent);
+                        //attachments = service.GetAttachments(interaction.EntrepriseInteractionCurrent);
+
+			            Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService service2 = this.container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService>();
+						Genesyslab.Enterprise.Model.Channel.IClientChannel channel = this.container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Protocol.IChannelManager>().Register(service2.UCSApp, "IW@ContactService");
+						if ((channel != null) && (channel.State == ChannelState.Opened))
+						{
+							attachments = interaction.ViewData["OutboundEmailView_Attachments"] as ObservableCollection<IAttachmentGraphic>;
+						}
+
+						
 // check for attachments with the same name
-                        List<string> duplicates = attachments.GroupBy(x => x.Name.ToLower())
-                            .Where(x => x.Count() > 1)
-                            .Select(x => x.Key)
-                            .ToList();
+                        //List<string> duplicates = attachments.GroupBy(x => x.Name.ToLower())
+                        //    .Where(x => x.Count() > 1)
+                        //    .Select(x => x.Key)
+                        //    .ToList();
                         foreach (IAttachment attachment in attachments)
                         {
                             if (attachment != null)
@@ -92,21 +102,21 @@ namespace Adventus.Modules.Email
                                 IAttachmentGraphic item = this.container.Resolve<IAttachmentGraphic>();
                                 item.DocumentId = attachment.Id;
                                 item.DataSourceType = DataSourceType.Main;
-                                if (duplicates.Contains(attachment.Name, StringComparer.OrdinalIgnoreCase))
-                                {
-                                    item.DocumentName = attachment.Id + "_" + attachment.Name;
-                                }
-                                else
-                                {
-                                    item.DocumentName = attachment.Name;
-                                }
-                                item.DocumentSize = attachment.Size.ToString();
-                                DownloadAttachment(item, interaction);
+                                //if (duplicates.Contains(attachment.Name, StringComparer.OrdinalIgnoreCase))
+                                //{
+                                //    item.DocumentName = attachment.Id + "_" + attachment.Name;
+                                //}
+                                //else
+                                //{
+                                //    item.DocumentName = attachment.Name;
+                                //}
+                                //item.DocumentSize = attachment.Size.ToString();
+                                //DownloadAttachment(item, interaction);
 
 								attachmentNames.Add(attachment.Name); // for adding to message body
                             }
                         }
-                    }
+                   // }
 
 //                        KeyValueCollection attachedData = new KeyValueCollection();
 //                        attachedData = interaction.GetAllAttachedData();
@@ -116,7 +126,7 @@ namespace Adventus.Modules.Email
 					string messageSubject = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
 					string messageFrom = (interaction.GetAttachedData("FromAddress") ?? "").ToString();
 					string messageDate = interactionEmail.EntrepriseEmailInteractionCurrent.StartDate.ToString("dd.MM.yyyy HH:mm");
-					string messageTo = interactionEmail.EntrepriseEmailInteractionCurrent.Mailbox;
+					string messageTo = interactionEmail.EntrepriseEmailInteractionCurrent.To[0];
 
                     if (messageText != null && messageText.Length != 0)		// for plain text messages
 					{

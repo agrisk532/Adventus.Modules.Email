@@ -55,8 +55,15 @@ namespace Adventus.Modules.Email
  */
         private void SendAndSaveAttachmentsButton_Click(object sender, RoutedEventArgs e)
         {
-            IChainOfCommand Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("SendAndSaveAttachments");
+		// send email
             IDictionary<string, object> parameters = new Dictionary<string, object>();
+			IChainOfCommand Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("InteractionEmailSend");
+			parameters.Clear();
+            parameters.Add("CommandParameter", Model.Interaction);
+            Command.Execute(parameters);
+		// save email to filesystem
+            Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("SaveAttachments");
+			parameters.Clear();
             parameters.Add("Model", Model);
             Command.Execute(parameters);
         }

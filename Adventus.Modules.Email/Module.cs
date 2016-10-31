@@ -94,12 +94,6 @@ namespace Adventus.Modules.Email
                     new CommandActivator() { CommandType = typeof(SaveAttachmentsCommand), Name = "SaveAttachments"}
                 }
             );
-            commandManager.CreateChainOfCommandByName("SendAndSaveAttachments");
-            commandManager.AddCommandToChainOfCommand("SendAndSaveAttachments", new List<CommandActivator>()
-                {
-                    new CommandActivator() { CommandType = typeof(SaveAttachmentsCommand), Name = "SaveAttachments"}
-                }
-            );
 
             commandManager.InsertCommandToChainOfCommandBefore("InteractionEmailSend", "Send", new List<CommandActivator>()
                 {

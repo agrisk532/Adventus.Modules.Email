@@ -1,0 +1,3 @@
+return this.Interaction.ViewData["OutboundEmailView_Attachments"] as ObservableCollection<IAttachmentGraphic>;
+
+interaction.ViewData["OutboundEmailView_Attachments"]
