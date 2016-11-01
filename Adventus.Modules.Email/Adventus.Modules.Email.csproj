@@ -66,8 +66,24 @@
     <Reference Include="Genesyslab.Platform.Commons">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Commons.dll</HintPath>
     </Reference>
+    <Reference Include="Genesyslab.Platform.Commons.Collections, Version=8.5.201.6, Culture=neutral, PublicKeyToken=2248646200015f60, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Commons.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="Genesyslab.Platform.Commons.Connection, Version=8.5.201.6, Culture=neutral, PublicKeyToken=2248646200015f60, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Commons.Connection.dll</HintPath>
+    </Reference>
     <Reference Include="Genesyslab.Platform.Commons.Protocols">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Commons.Protocols.dll</HintPath>
+    </Reference>
+    <Reference Include="Genesyslab.Platform.Contacts.Protocols, Version=8.5.201.6, Culture=neutral, PublicKeyToken=2248646200015f60, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Contacts.Protocols.dll</HintPath>
+    </Reference>
+    <Reference Include="Genesyslab.Platform.OpenMedia.Protocols, Version=8.5.201.6, Culture=neutral, PublicKeyToken=2248646200015f60, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.OpenMedia.Protocols.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Practices.Unity">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Microsoft.Practices.Unity.dll</HintPath>
@@ -116,6 +132,9 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="README.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -17,6 +17,11 @@ using System.Text;
 using System.Linq;
 using Genesyslab.Platform.Commons.Protocols;
 using Genesyslab.Platform.Commons.Logging;
+using Genesyslab.Platform.Contacts.Protocols;
+using Genesyslab.Platform.Contacts.Protocols.ContactServer;
+using Genesyslab.Platform.Contacts.Protocols.ContactServer.Requests;
+using Genesyslab.Platform.Contacts.Protocols.ContactServer.Events;
+
 
 namespace Adventus.Modules.Email
 {
@@ -75,48 +80,69 @@ namespace Adventus.Modules.Email
                 {
 					List<string> attachmentNames = new List<string>();	// for adding to message body
 					// download attachments and store in filesystem
-                    //if ((interactionEmail.EntrepriseEmailAttachments != null) && (interactionEmail.EntrepriseEmailAttachments.Count > 0))
-                    //{
-                        ObservableCollection<IAttachmentGraphic> attachments = new ObservableCollection<IAttachmentGraphic>();
-                        IContactService service = this.container.Resolve<IEnterpriseServiceProvider>().Resolve<IContactService>("contactService");
-// get attachment names only
-                        //attachments = service.GetAttachments(interaction.EntrepriseInteractionCurrent);
+                        IList<IAttachmentGraphic> attachments = new List<IAttachmentGraphic>();
 
-			            Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService service2 = this.container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService>();
-						Genesyslab.Enterprise.Model.Channel.IClientChannel channel = this.container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Protocol.IChannelManager>().Register(service2.UCSApp, "IW@ContactService");
-						if ((channel != null) && (channel.State == ChannelState.Opened))
+						UniversalContactServerProtocol ucsConnection;
+						ucsConnection = new UniversalContactServerProtocol(new Endpoint("eS_UniversalContactServer", "genesys1", 6120));
+						// Add event handlers
+						ucsConnection.Opened += new EventHandler(ucsConnection_Opened);
+						ucsConnection.Error += new EventHandler(ucsConnection_Error);
+						ucsConnection.Closed += new EventHandler(ucsConnection_Closed);
+
+						ucsConnection.Open();
+
+						RequestGetInteractionContent request = new RequestGetInteractionContent();
+						request.InteractionId = interaction.EntrepriseInteractionCurrent.Id;
+						request.IncludeAttachments = true;
+						request.IncludeBinaryContent = true;
+						
+						EventGetInteractionContent eventGetIxnContent = (EventGetInteractionContent)ucsConnection.Request(request);
+						
+						String subject = eventGetIxnContent.InteractionAttributes.Subject;
+						String key = eventGetIxnContent.InteractionAttributes.Id;
+						if (eventGetIxnContent.Attachments != null)
 						{
-							attachments = interaction.ViewData["OutboundEmailView_Attachments"] as ObservableCollection<IAttachmentGraphic>;
+							Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachedFile = eventGetIxnContent.Attachments.Get(0);
+							RequestGetDocument request2 = new RequestGetDocument();
+							request2.DocumentId = attachedFile.DocumentId;
+							request2.IncludeBinaryContent = true;
+						
+							EventGetDocument eventGetDoc = (EventGetDocument)ucsConnection.Request(request2);
+							// binary is in eventGetDoc.Content;
+						}
+						
+						if (ucsConnection.State != ChannelState.Closed && ucsConnection.State != ChannelState.Closing)
+						{
+							ucsConnection.Close();
+							ucsConnection.Dispose();
 						}
 
-						
 // check for attachments with the same name
                         //List<string> duplicates = attachments.GroupBy(x => x.Name.ToLower())
                         //    .Where(x => x.Count() > 1)
                         //    .Select(x => x.Key)
                         //    .ToList();
-                        foreach (IAttachment attachment in attachments)
-                        {
-                            if (attachment != null)
-                            {
-                                IAttachmentGraphic item = this.container.Resolve<IAttachmentGraphic>();
-                                item.DocumentId = attachment.Id;
-                                item.DataSourceType = DataSourceType.Main;
-                                //if (duplicates.Contains(attachment.Name, StringComparer.OrdinalIgnoreCase))
-                                //{
-                                //    item.DocumentName = attachment.Id + "_" + attachment.Name;
-                                //}
-                                //else
-                                //{
-                                //    item.DocumentName = attachment.Name;
-                                //}
-                                //item.DocumentSize = attachment.Size.ToString();
-                                //DownloadAttachment(item, interaction);
+        //                foreach (IAttachment attachment in attachments)
+        //                {
+        //                    if (attachment != null)
+        //                    {
+        //                        IAttachmentGraphic item = this.container.Resolve<IAttachmentGraphic>();
+        //                        item.DocumentId = attachment.Id;
+        //                        item.DataSourceType = DataSourceType.Main;
+        //                        //if (duplicates.Contains(attachment.Name, StringComparer.OrdinalIgnoreCase))
+        //                        //{
+        //                        //    item.DocumentName = attachment.Id + "_" + attachment.Name;
+        //                        //}
+        //                        //else
+        //                        //{
+        //                        //    item.DocumentName = attachment.Name;
+        //                        //}
+        //                        //item.DocumentSize = attachment.Size.ToString();
+        //                        //DownloadAttachment(item, interaction);
 
-								attachmentNames.Add(attachment.Name); // for adding to message body
-                            }
-                        }
-                   // }
+								//attachmentNames.Add(attachment.Name); // for adding to message body
+        //                    }
+        //                }
 
 //                        KeyValueCollection attachedData = new KeyValueCollection();
 //                        attachedData = interaction.GetAllAttachedData();
@@ -194,7 +220,22 @@ namespace Adventus.Modules.Email
             }
         }
 
-        delegate bool ExecuteDelegate(IDictionary<string, object> parameters, IProgressUpdater progressUpdater);
+		private void ucsConnection_Closed(object sender, EventArgs e)
+		{
+			//throw new NotImplementedException();
+		}
+
+		private void ucsConnection_Error(object sender, EventArgs e)
+		{
+			//throw new NotImplementedException();
+		}
+
+		private void ucsConnection_Opened(object sender, EventArgs e)
+		{
+			//throw new NotImplementedException();
+		}
+
+		delegate bool ExecuteDelegate(IDictionary<string, object> parameters, IProgressUpdater progressUpdater);
 
 /** \brief Downloads email attachments and stores them to disk
  *  \param attachmentGraphic contains data about attachment
@@ -265,7 +306,7 @@ namespace Adventus.Modules.Email
 		 *  \param dataSourceType Main or Archive
 		 *  \return email attachment
 		 */
-		private IAttachment LoadAttachment(string attachmentId, DataSourceType dataSourceType)
+		private IAttachment LoadAttachment(string attachmentId, Genesyslab.Enterprise.Services.DataSourceType dataSourceType)
         {
             IContactService service = this.container.Resolve<IEnterpriseServiceProvider>().Resolve<IContactService>("contactService");
             Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService service2 = this.container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService>();
