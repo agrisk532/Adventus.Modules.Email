@@ -94,7 +94,6 @@ namespace Adventus.Modules.Email
 						RequestGetInteractionContent request = new RequestGetInteractionContent();
 						request.InteractionId = interaction.EntrepriseInteractionCurrent.Id;
 						request.IncludeAttachments = true;
-						request.IncludeBinaryContent = true;
 						
 						EventGetInteractionContent eventGetIxnContent = (EventGetInteractionContent)ucsConnection.Request(request);
 						
@@ -102,13 +101,14 @@ namespace Adventus.Modules.Email
 						String key = eventGetIxnContent.InteractionAttributes.Id;
 						if (eventGetIxnContent.Attachments != null)
 						{
-							Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachedFile = eventGetIxnContent.Attachments.Get(0);
-							RequestGetDocument request2 = new RequestGetDocument();
-							request2.DocumentId = attachedFile.DocumentId;
-							request2.IncludeBinaryContent = true;
-						
-							EventGetDocument eventGetDoc = (EventGetDocument)ucsConnection.Request(request2);
-							// binary is in eventGetDoc.Content;
+							foreach(Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachedFile in eventGetIxnContent.Attachments)
+							{
+								RequestGetDocument request2 = new RequestGetDocument();
+								request2.DocumentId = attachedFile.DocumentId;
+								request2.IncludeBinaryContent = true;
+								EventGetDocument eventGetDoc = (EventGetDocument)ucsConnection.Request(request2);
+								File.WriteAllBytes(eventGetDoc.TheName, eventGetDoc.Content);
+							}
 						}
 						
 						if (ucsConnection.State != ChannelState.Closed && ucsConnection.State != ChannelState.Closing)
