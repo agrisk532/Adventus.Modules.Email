@@ -40,10 +40,9 @@ namespace Adventus.Modules.Email
         
         public SaveAttachmentsCommand(IObjectContainer container, ILogger logger)
         {
-          this.container = container;
-          this.log = logger;
-          log.Info("SaveAttachmentsCommand() entered");
-
+			this.container = container;
+			this.log = logger;
+			log.Info("SaveAttachmentsCommand() entered");
         }
 
 /** \brief Command implementation
@@ -78,83 +77,74 @@ namespace Adventus.Modules.Email
                 }
                 else
                 {
-					List<string> attachmentNames = new List<string>();	// for adding to message body
+					// connection to contact server
+					UniversalContactServerProtocol ucsConnection;
+					ucsConnection = new UniversalContactServerProtocol(new Endpoint("eS_UniversalContactServer", "genesys1", 6120));
+					ucsConnection.Opened += new EventHandler(ucsConnection_Opened);
+					ucsConnection.Error += new EventHandler(ucsConnection_Error);
+					ucsConnection.Closed += new EventHandler(ucsConnection_Closed);
+					ucsConnection.Open();
+
 					// download attachments and store in filesystem
-                        IList<IAttachmentGraphic> attachments = new List<IAttachmentGraphic>();
+                    //IList<IAttachmentGraphic> attachments = new List<IAttachmentGraphic>();
 
-						UniversalContactServerProtocol ucsConnection;
-						ucsConnection = new UniversalContactServerProtocol(new Endpoint("eS_UniversalContactServer", "genesys1", 6120));
-						// Add event handlers
-						ucsConnection.Opened += new EventHandler(ucsConnection_Opened);
-						ucsConnection.Error += new EventHandler(ucsConnection_Error);
-						ucsConnection.Closed += new EventHandler(ucsConnection_Closed);
+					RequestGetInteractionContent request = new RequestGetInteractionContent();
+					request.InteractionId = interaction.EntrepriseInteractionCurrent.Id;
+					request.IncludeAttachments = true;
 
-						ucsConnection.Open();
+					EventGetInteractionContent eventGetIxnContent = (EventGetInteractionContent)ucsConnection.Request(request);
 
-						RequestGetInteractionContent request = new RequestGetInteractionContent();
-						request.InteractionId = interaction.EntrepriseInteractionCurrent.Id;
-						request.IncludeAttachments = true;
-						
-						EventGetInteractionContent eventGetIxnContent = (EventGetInteractionContent)ucsConnection.Request(request);
-						
-						String subject = eventGetIxnContent.InteractionAttributes.Subject;
-						String key = eventGetIxnContent.InteractionAttributes.Id;
-						if (eventGetIxnContent.Attachments != null)
+					String subject = eventGetIxnContent.InteractionAttributes.Subject;
+					//String key = eventGetIxnContent.InteractionAttributes.Id;
+					AttachmentList attachmentList = eventGetIxnContent.Attachments;
+
+					// get attachment names
+					List<string> attachmentNames = new List<string>();	// for adding to message body
+					foreach(Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachment in attachmentList)
+					{
+						attachmentNames.Add(attachment.TheName);
+					}
+
+					// check for attachments with the same name
+					List<string> duplicates = attachmentNames.GroupBy(x => x.ToLower())
+						.Where(x => x.Count() > 1)
+						.Select(x => x.Key)
+						.ToList();
+
+					attachmentNames.Clear();
+
+					foreach (Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachment in attachmentList)
+					{
+						//IAttachmentGraphic item = this.container.Resolve<IAttachmentGraphic>();
+						//item.DocumentId = attachment.Id;
+						//item.DataSourceType = DataSourceType.Main;
+						string documentName = attachment.TheName;
+						if (duplicates.Contains(documentName, StringComparer.OrdinalIgnoreCase))
 						{
-							foreach(Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachedFile in eventGetIxnContent.Attachments)
-							{
-								RequestGetDocument request2 = new RequestGetDocument();
-								request2.DocumentId = attachedFile.DocumentId;
-								request2.IncludeBinaryContent = true;
-								EventGetDocument eventGetDoc = (EventGetDocument)ucsConnection.Request(request2);
-								File.WriteAllBytes(eventGetDoc.TheName, eventGetDoc.Content);
-							}
-						}
-						
-						if (ucsConnection.State != ChannelState.Closed && ucsConnection.State != ChannelState.Closing)
-						{
-							ucsConnection.Close();
-							ucsConnection.Dispose();
+							documentName = attachment.DocumentId + "_" + documentName;
 						}
 
-// check for attachments with the same name
-                        //List<string> duplicates = attachments.GroupBy(x => x.Name.ToLower())
-                        //    .Where(x => x.Count() > 1)
-                        //    .Select(x => x.Key)
-                        //    .ToList();
-        //                foreach (IAttachment attachment in attachments)
-        //                {
-        //                    if (attachment != null)
-        //                    {
-        //                        IAttachmentGraphic item = this.container.Resolve<IAttachmentGraphic>();
-        //                        item.DocumentId = attachment.Id;
-        //                        item.DataSourceType = DataSourceType.Main;
-        //                        //if (duplicates.Contains(attachment.Name, StringComparer.OrdinalIgnoreCase))
-        //                        //{
-        //                        //    item.DocumentName = attachment.Id + "_" + attachment.Name;
-        //                        //}
-        //                        //else
-        //                        //{
-        //                        //    item.DocumentName = attachment.Name;
-        //                        //}
-        //                        //item.DocumentSize = attachment.Size.ToString();
-        //                        //DownloadAttachment(item, interaction);
+						attachmentNames.Add(documentName); // for adding to message body
+						DownloadAttachment(ucsConnection, attachment.DocumentId, documentName, subject);
+					}
 
-								//attachmentNames.Add(attachment.Name); // for adding to message body
-        //                    }
-        //                }
+					if (ucsConnection.State != ChannelState.Closed && ucsConnection.State != ChannelState.Closing)
+					{
+						ucsConnection.Close();
+						ucsConnection.Dispose();
+					}
 
-//                        KeyValueCollection attachedData = new KeyValueCollection();
-//                        attachedData = interaction.GetAllAttachedData();
-// save the message body
-                    string messageText = interactionEmail.EntrepriseEmailInteractionCurrent.MessageText;    /**< without html formatting */
-                    string structuredMessageText = interactionEmail.EntrepriseEmailInteractionCurrent.StructuredText;   /**< with html formatting */
+					//KeyValueCollection attachedData = new KeyValueCollection();
+					//attachedData = interaction.GetAllAttachedData();
+					//save the message body
+					string messageText = interactionEmail.EntrepriseEmailInteractionCurrent.MessageText;    /**< without html formatting */
+					string structuredMessageText = interactionEmail.EntrepriseEmailInteractionCurrent.StructuredText;   /**< with html formatting */
 					string messageSubject = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
 					string messageFrom = (interaction.GetAttachedData("FromAddress") ?? "").ToString();
 					string messageDate = interactionEmail.EntrepriseEmailInteractionCurrent.StartDate.ToString("dd.MM.yyyy HH:mm");
 					string messageTo = interactionEmail.EntrepriseEmailInteractionCurrent.To[0];
 
-                    if (messageText != null && messageText.Length != 0)		// for plain text messages
+					if (messageText != null && messageText.Length != 0)     // for plain text messages
 					{
 						StringBuilder messageTextModified = new StringBuilder();
 						messageTextModified.AppendLine("Subject: " + messageSubject);
@@ -162,19 +152,19 @@ namespace Adventus.Modules.Email
 						messageTextModified.AppendLine("Date: " + messageDate);
 						messageTextModified.AppendLine("To: " + messageTo);
 						messageTextModified.AppendLine(string.Empty);
-						if(attachmentNames.Count > 0)
+						if (attachmentNames.Count > 0)
 						{
 							messageTextModified.AppendLine(String.Format("{0} attachments:", attachmentNames.Count));
-							foreach(string attachmentName in attachmentNames)
+							foreach (string attachmentName in attachmentNames)
 							{
 								messageTextModified.AppendLine(attachmentName);
 							}
 							messageTextModified.AppendLine(string.Empty);
 						}
 						messageTextModified.Append(messageText);
-                        SaveMessage(messageTextModified.ToString(), false, false);
+						SaveMessage(messageTextModified.ToString(), false, false);
 					}
-                    if (structuredMessageText != null && structuredMessageText.Length != 0)		// for html messages
+					if (structuredMessageText != null && structuredMessageText.Length != 0)     // for html messages
 					{
 						StringBuilder messageTextModified = new StringBuilder();
 						messageTextModified.AppendLine("<!DOCTYPE html><html><head><title>" + messageSubject + "</title></head><body><p>");
@@ -182,42 +172,43 @@ namespace Adventus.Modules.Email
 						messageTextModified.AppendLine("<b>From: </b>" + messageFrom + "<br>");
 						messageTextModified.AppendLine("<b>Date: </b>" + messageDate + "<br>");
 						messageTextModified.AppendLine("<b>To: </b>" + messageTo + "<br><br>");
-						if(attachmentNames.Count > 0)
+						if (attachmentNames.Count > 0)
 						{
 							messageTextModified.AppendLine(String.Format("<b>{0} attachments:</b><br>", attachmentNames.Count));
-							foreach(string attachmentName in attachmentNames)
+							foreach (string attachmentName in attachmentNames)
 							{
 								messageTextModified.AppendLine("<a href=\"" + attachmentName + "\">" + attachmentName + "</a><br>");
 							}
 							messageTextModified.AppendLine("<br>");
 						}
-                        SaveMessage(structuredMessageText, true, true);  // save original email body in email.html file
+						SaveMessage(structuredMessageText, true, true);  // save original email body in email.html file
 						messageTextModified.AppendLine("<a href=\"original_email.html\">Original email</a>");
 						messageTextModified.AppendLine("</body></html>");
 						SaveMessage(messageTextModified.ToString(), true, false);  // save modified email body in subject.html file
 					}
 
-                    Model.EmailPartsInfoStored = true;
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append("Interaction ID: " + interaction.EntrepriseInteractionCurrent.Id);
-                    sb.AppendLine(Environment.NewLine);
-                    sb.Append("From: " + interaction.GetAttachedData("FromAddress"));
-                    sb.AppendLine(Environment.NewLine);
-                    //sb.Append("Subject: " + interaction.GetAttachedData("Subject"));
+					Model.EmailPartsInfoStored = true;
+					StringBuilder sb = new StringBuilder();
+					sb.Append("Interaction ID: " + interaction.EntrepriseInteractionCurrent.Id);
+					sb.AppendLine(Environment.NewLine);
+					sb.Append("From: " + interaction.GetAttachedData("FromAddress"));
+					sb.AppendLine(Environment.NewLine);
+					//sb.Append("Subject: " + interaction.GetAttachedData("Subject"));
 					sb.Append("Subject: " + interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "");
-                    sb.AppendLine(Environment.NewLine);
-                    sb.Append("Email parts: ");
-                    sb.AppendLine(Environment.NewLine);
-                    for (int i = 0; i < Model.EmailPartsPath.Count; i++)
-                    {
-                        sb.AppendLine(Model.EmailPartsPath[i]);
-                        sb.AppendLine();
-                    }
-                    MessageBox.Show(sb.ToString(), "Information");
+					sb.AppendLine(Environment.NewLine);
+					sb.Append("Email parts: ");
+					sb.AppendLine(Environment.NewLine);
+					for (int i = 0; i < Model.EmailPartsPath.Count; i++)
+					{
+						sb.AppendLine(Model.EmailPartsPath[i]);
+						sb.AppendLine();
+					}
+					MessageBox.Show(sb.ToString(), "Information");
 
-                    return false;
+					return false;
                 }
             }
+
         }
 
 		private void ucsConnection_Closed(object sender, EventArgs e)
@@ -241,18 +232,16 @@ namespace Adventus.Modules.Email
  *  \param attachmentGraphic contains data about attachment
  *  \return full path of attachment on disk
  */       
-        public string DownloadAttachment(IAttachmentGraphic attachmentGraphic, IInteraction interaction)
+        public string DownloadAttachment(UniversalContactServerProtocol ucsConnection, string documentId, string documentName, string emailSubject)
         {
             try
 			{
-
                 string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-				string subj = RemoveSpecialChars(interactionEmail.EntrepriseEmailInteractionCurrent.Subject);
+				string subj = RemoveSpecialChars(emailSubject);
 
 				if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0, MAX_SUBJECT_LENGTH);
 				string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
-				attachmentGraphic.DirectoryFullName = str;
-				string path = Path.Combine(str, attachmentGraphic.GetValidFileName());
+				string path = Path.Combine(str, documentName);
 				if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
 
 				if (File.Exists(path))   /**< don't download attachment if it's already on disk */
@@ -263,23 +252,16 @@ namespace Adventus.Modules.Email
 				{
 					Directory.CreateDirectory(str);
 				}
-				IAttachment attachment = this.LoadAttachment(attachmentGraphic.DocumentId, attachmentGraphic.DataSourceType);
-				if (attachment != null)
-				{
-					FileStream stream = new FileInfo(path).Open(FileMode.Create, FileAccess.Write);
-					stream.Write(attachment.Content, 0, attachment.Size.Value);
-					stream.Close();
-					return path;
-				}
-				else
-				{
-					MessageBox.Show(string.Format("DownloadAttachment is null. Can't downloaded the file {0}", path), "Attention");
-					return null;
-				}
+
+				RequestGetDocument request = new RequestGetDocument();
+				request.DocumentId = documentId;
+				request.IncludeBinaryContent = true;
+				EventGetDocument eventGetDoc = (EventGetDocument)ucsConnection.Request(request);
+				File.WriteAllBytes(path, eventGetDoc.Content);
 			}
 			catch (Exception exception)
             {
-                MessageBox.Show(string.Format("Exception in DownloadAttachment. {0}", exception.ToString()), "Attention");
+				MessageBox.Show(string.Format("Exception in DownloadAttachment. {0}", exception.ToString()), "Attention");
             }
             return null;
         }
@@ -300,23 +282,6 @@ namespace Adventus.Modules.Email
 			res = (res.Length > 0 && (!string.IsNullOrWhiteSpace(res))) ? res : "Empty Subject";
 			return res;
 		}
-
-		/** \brief Gets email attachments from the contact server
-		 *  \param attachmentId global Id of attachment
-		 *  \param dataSourceType Main or Archive
-		 *  \return email attachment
-		 */
-		private IAttachment LoadAttachment(string attachmentId, Genesyslab.Enterprise.Services.DataSourceType dataSourceType)
-        {
-            IContactService service = this.container.Resolve<IEnterpriseServiceProvider>().Resolve<IContactService>("contactService");
-            Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService service2 = this.container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService>();
-            Genesyslab.Enterprise.Model.Channel.IClientChannel channel = this.container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Protocol.IChannelManager>().Register(service2.UCSApp, "IW@ContactService");
-            if ((channel != null) && (channel.State == ChannelState.Opened))
-            {
-                return service.GetAttachment(channel, attachmentId, dataSourceType, WindowsOptions.Default.Emailattachmentdownloadtimeout);
-            }
-            return null;
-        }
 
 /** \brief Saves email message to disk.
  *  \param message contains the email body without attachments
