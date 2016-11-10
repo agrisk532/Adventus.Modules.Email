@@ -43,7 +43,17 @@ namespace Adventus.Modules.Email
             {
                 MessageBox.Show("Interaction is not of IInteractionEmail type");
             }
-        }
+
+            switch (Model.Interaction.EntrepriseInteractionCurrent.IdType.Direction)
+            {
+                case Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out:
+					Model.SaveButtonVisibility = Visibility.Collapsed;
+                    break;
+                case Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In:
+					Model.SaveButtonVisibility = Visibility.Visible;
+                    break;
+            }
+		}
 
 /** \brief Executed once, at the view object destruction
  */

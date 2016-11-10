@@ -8,7 +8,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
-        <commonControls:InteractionToolBarButton Name="buttonSendSave" ToolTip="SendAndKataloog" Click="SendAndSaveAttachmentsButton_Click">
+        <commonControls:InteractionToolBarButton Name="buttonSendSave" ToolTip="SendAndKataloog" Click="SendAndSaveAttachmentsButton_Click" Visibility="{Binding Path=SendAndSaveButtonVisibility}">
             <StackPanel Orientation="Horizontal">
                 <commonControls:MagicImage ResourceKey="Common.Floppy" Width="24" Height="24"/>
             </StackPanel>

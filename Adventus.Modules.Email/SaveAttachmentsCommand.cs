@@ -100,32 +100,35 @@ namespace Adventus.Modules.Email
 
 					// get attachment names
 					List<string> attachmentNames = new List<string>();	// for adding to message body
-					foreach(Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachment in attachmentList)
+					if(attachmentList != null)
 					{
-						attachmentNames.Add(attachment.TheName);
-					}
-
-					// check for attachments with the same name
-					List<string> duplicates = attachmentNames.GroupBy(x => x.ToLower())
-						.Where(x => x.Count() > 1)
-						.Select(x => x.Key)
-						.ToList();
-
-					attachmentNames.Clear();
-
-					foreach (Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachment in attachmentList)
-					{
-						//IAttachmentGraphic item = this.container.Resolve<IAttachmentGraphic>();
-						//item.DocumentId = attachment.Id;
-						//item.DataSourceType = DataSourceType.Main;
-						string documentName = attachment.TheName;
-						if (duplicates.Contains(documentName, StringComparer.OrdinalIgnoreCase))
+						foreach(Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachment in attachmentList)
 						{
-							documentName = attachment.DocumentId + "_" + documentName;
+							attachmentNames.Add(attachment.TheName);
 						}
 
-						attachmentNames.Add(documentName); // for adding to message body
-						DownloadAttachment(ucsConnection, attachment.DocumentId, documentName, subject);
+						// check for attachments with the same name
+						List<string> duplicates = attachmentNames.GroupBy(x => x.ToLower())
+							.Where(x => x.Count() > 1)
+							.Select(x => x.Key)
+							.ToList();
+	
+						attachmentNames.Clear();
+	
+						foreach (Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachment in attachmentList)
+						{
+							//IAttachmentGraphic item = this.container.Resolve<IAttachmentGraphic>();
+							//item.DocumentId = attachment.Id;
+							//item.DataSourceType = DataSourceType.Main;
+							string documentName = attachment.TheName;
+							if (duplicates.Contains(documentName, StringComparer.OrdinalIgnoreCase))
+							{
+								documentName = attachment.DocumentId + "_" + documentName;
+							}
+	
+							attachmentNames.Add(documentName); // for adding to message body
+							DownloadAttachment(ucsConnection, attachment.DocumentId, documentName, subject);
+						}
 					}
 
 					if (ucsConnection.State != ChannelState.Closed && ucsConnection.State != ChannelState.Closing)

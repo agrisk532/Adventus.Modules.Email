@@ -43,6 +43,16 @@ namespace Adventus.Modules.Email
             {
                 MessageBox.Show("Interaction is not of IInteractionEmail type");
             }
+
+            switch (Model.Interaction.EntrepriseInteractionCurrent.IdType.Direction)
+            {
+                case Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out:
+					Model.SendAndSaveButtonVisibility = Visibility.Visible;
+                    break;
+                case Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In:
+					Model.SendAndSaveButtonVisibility = Visibility.Collapsed;
+                    break;
+            }
         }
 
 /** \brief Executed once, at the view object destruction
@@ -57,13 +67,19 @@ namespace Adventus.Modules.Email
         {
 		// send email
             IDictionary<string, object> parameters = new Dictionary<string, object>();
+
+	        IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
+            IInteraction interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
+            IInteractionEmail interactionEmail = interaction as IInteractionEmail;
 			IChainOfCommand Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("InteractionEmailSend");
 			parameters.Clear();
-            parameters.Add("CommandParameter", Model.Interaction);
+            parameters.Add("CommandParameter", interaction);
             Command.Execute(parameters);
 		// save email to filesystem
             Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("SaveAttachments");
 			parameters.Clear();
+			Model.Clear();
+			Model.Interaction = interaction;
             parameters.Add("Model", Model);
             Command.Execute(parameters);
         }
