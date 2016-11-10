@@ -9,6 +9,7 @@ using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
 using Genesyslab.Desktop.Modules.OpenMedia.Windows.Interactions.MediaView.Email.InteractionInboundEmailView;
 using Genesyslab.Desktop.WPFCommon;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
+using Genesyslab.Desktop.Modules.Windows.Event;
 
 namespace Adventus.Modules.Email
 {
@@ -44,21 +45,32 @@ namespace Adventus.Modules.Email
                 MessageBox.Show("Interaction is not of IInteractionEmail type");
             }
 
-            switch (Model.Interaction.EntrepriseInteractionCurrent.IdType.Direction)
-            {
-                case Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out:
-					Model.SendAndSaveButtonVisibility = Visibility.Visible;
-                    break;
-                case Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In:
-					Model.SendAndSaveButtonVisibility = Visibility.Collapsed;
-                    break;
-            }
+			container.Resolve<IInteractionManager>().InteractionEvent += 
+                         new System.EventHandler<EventArgs<IInteraction>> (ExtensionSampleModule_InteractionEvent);
         }
+
+
+		void ExtensionSampleModule_InteractionEvent(object sender, EventArgs<IInteraction> e)
+		{
+		      //Add a reference to: Genesyslab.Enterprise.Services.Multimedia.dll 
+		     //and Genesyslab.Enterprise.Model.dll object flag;
+		      IInteraction interaction = e.Value;
+			  if(interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In)
+			  {
+					Model.SendAndSaveButtonVisibility = Visibility.Collapsed;
+			  }
+			  else
+			  {
+			  		Model.SendAndSaveButtonVisibility = Visibility.Visible;
+			  }
+		}
 
 /** \brief Executed once, at the view object destruction
  */
         public void Destroy()
         {
+		                     container.Resolve<IInteractionManager>().InteractionEvent -= 
+                         new System.EventHandler<EventArgs<IInteraction>> (ExtensionSampleModule_InteractionEvent);
         }
 
 /** \brief Event handler

@@ -44,21 +44,33 @@ namespace Adventus.Modules.Email
                 MessageBox.Show("Interaction is not of IInteractionEmail type");
             }
 
-            switch (Model.Interaction.EntrepriseInteractionCurrent.IdType.Direction)
-            {
-                case Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out:
+			container.Resolve<IInteractionManager>().InteractionEvent += 
+                         new System.EventHandler<EventArgs<IInteraction>> (ExtensionSampleModule_InteractionEvent);
+		}
+
+
+		void ExtensionSampleModule_InteractionEvent(object sender, EventArgs<IInteraction> e)
+		{
+		      //Add a reference to: Genesyslab.Enterprise.Services.Multimedia.dll 
+		     //and Genesyslab.Enterprise.Model.dll object flag;
+		      IInteraction interaction = e.Value;
+			  if(interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
+			  {
 					Model.SaveButtonVisibility = Visibility.Collapsed;
-                    break;
-                case Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In:
-					Model.SaveButtonVisibility = Visibility.Visible;
-                    break;
-            }
+			  }
+			  else
+			  {
+			  		Model.SaveButtonVisibility = Visibility.Visible;
+			  }
 		}
 
 /** \brief Executed once, at the view object destruction
  */
         public void Destroy()
         {
+			container.Resolve<IInteractionManager>().InteractionEvent -= 
+				new System.EventHandler<EventArgs<IInteraction>> (ExtensionSampleModule_InteractionEvent);
+
         }
 
 /** \brief Event handler
