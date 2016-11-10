@@ -77,6 +77,10 @@
     <Reference Include="Genesyslab.Platform.Commons.Protocols">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Commons.Protocols.dll</HintPath>
     </Reference>
+    <Reference Include="Genesyslab.Platform.Configuration.Protocols, Version=8.5.201.6, Culture=neutral, PublicKeyToken=2248646200015f60, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Configuration.Protocols.dll</HintPath>
+    </Reference>
     <Reference Include="Genesyslab.Platform.Contacts.Protocols, Version=8.5.201.6, Culture=neutral, PublicKeyToken=2248646200015f60, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Contacts.Protocols.dll</HintPath>

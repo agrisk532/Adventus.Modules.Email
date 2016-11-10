@@ -2,16 +2,10 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Threading;
-using System.Collections.ObjectModel;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
-using Genesyslab.Desktop.Modules.Windows;
-using Genesyslab.Enterprise.Model.Contact;
-using Genesyslab.Desktop.Modules.Windows.Views.Common.AttachmentView;
-using Genesyslab.Enterprise.Services;
-using Genesyslab.Enterprise.Model.ServiceModel;
 using System.IO;
 using System.Text;
 using System.Linq;
@@ -21,6 +15,7 @@ using Genesyslab.Platform.Contacts.Protocols;
 using Genesyslab.Platform.Contacts.Protocols.ContactServer;
 using Genesyslab.Platform.Contacts.Protocols.ContactServer.Requests;
 using Genesyslab.Platform.Contacts.Protocols.ContactServer.Events;
+using Genesyslab.Desktop.Modules.Core.SDK.Configurations;
 
 
 namespace Adventus.Modules.Email
@@ -77,9 +72,14 @@ namespace Adventus.Modules.Email
                 }
                 else
                 {
+					//var cfg = container.Resolve<IConfigurationService>();
+					//var statServer = cfg.AvailableConnections.Where(item => item.Type.Equals(Genesyslab.Platform.Configuration.Protocols.Types.CfgAppType.CFGStatServer)).ToList();
+					//var ServerInformation = statServer[0].ConnectionParameters[0].ServerInformation;
+
 					// connection to contact server
 					UniversalContactServerProtocol ucsConnection;
 					ucsConnection = new UniversalContactServerProtocol(new Endpoint("eS_UniversalContactServer", "genesys1", 6120));
+					//ucsConnection = new UniversalContactServerProtocol(new Endpoint(statServer[0].Name, ServerInformation.Host.Name, Int32.Parse(ServerInformation.Port)));
 					ucsConnection.Opened += new EventHandler(ucsConnection_Opened);
 					ucsConnection.Error += new EventHandler(ucsConnection_Error);
 					ucsConnection.Closed += new EventHandler(ucsConnection_Closed);
