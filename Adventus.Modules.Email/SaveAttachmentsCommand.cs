@@ -310,7 +310,11 @@ namespace Adventus.Modules.Email
 
 		private string GetOutputFolder(string subj)
 		{
-            string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            //string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+			string defaultDirectory = @"\\nas\public\Agris\GenesysTestFolder";
+			#if FOR_EE
+				string defaultDirectory = "\\celerra-fs.lauteri.inter\Users\TaaviK\Desktop\Vahekataloog";
+			#endif
 			return string.Format(@"{0}\{1}", defaultDirectory, subj);
 		}
 
@@ -339,11 +343,9 @@ namespace Adventus.Modules.Email
         {
             try
 			{
-                string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 				string subj = RemoveSpecialChars(emailSubject);
-
 				if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0, MAX_SUBJECT_LENGTH);
-				string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
+				string str = GetOutputFolder(subj);
 				string path = Path.Combine(str, documentName);
 				if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
 
