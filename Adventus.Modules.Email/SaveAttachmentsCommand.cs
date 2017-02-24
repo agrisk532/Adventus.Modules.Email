@@ -146,7 +146,7 @@ namespace Adventus.Modules.Email
 							}
 
 							attachmentNames.Add(documentName); // for adding to message body
-							DownloadAttachment(ucsConnection, attachment.DocumentId, documentName, subject);  // document path also saved in Model.EmailPartsPath
+							DownloadAttachment(ucsConnection, attachment.DocumentId, documentName, subject);  // Saves Attachment on disk. Document path also saved in Model.EmailPartsPath
 						}
 					}
 
@@ -191,6 +191,7 @@ namespace Adventus.Modules.Email
 					else
 					{
 						MailMessage mailMessage = new MailMessage(messageFrom, messageTo);
+						mailMessage.Subject = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
 						if (structuredMessageText != null)
 						{
 							mailMessage.Body = structuredMessageText;
@@ -218,24 +219,27 @@ namespace Adventus.Modules.Email
 						}
 						mailMessage.Dispose();
 					}
-					// delete all files except .eml
+					// The following files must be on disk: for incoming email - .eml + attachments; for outgoing - only .eml
+					// delete all files except .eml for outgoing email
 
-					foreach (string p in Model.EmailPartsPath)
+					if(interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
 					{
-						try
+						foreach (string p in Model.EmailPartsPath)
 						{
-							if(!p.EndsWith("eml"))
+							try
 							{
-								File.Delete(p);
+								if (!p.EndsWith("eml"))
+								{
+									File.Delete(p);
+								}
+							}
+							catch (Exception ex)
+							{
+								MessageBox.Show(string.Format("Cannot delete file {0}: {1}", p, ex.ToString()), "Attention");
 							}
 						}
-						catch(Exception ex)
-						{
-							MessageBox.Show(string.Format("Cannot delete file {0}: {1}", p, ex.ToString()), "Attention");
-						}
+						Model.EmailPartsPath.RemoveAll(x => !x.EndsWith("eml"));
 					}
-
-					Model.EmailPartsPath.RemoveAll(x => !x.EndsWith("eml"));
 
 					//if (messageText != null && messageText.Length != 0)     // for plain text messages
 					//{
