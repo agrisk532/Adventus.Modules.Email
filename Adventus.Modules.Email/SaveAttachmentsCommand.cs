@@ -310,10 +310,13 @@ namespace Adventus.Modules.Email
 
 		private string GetOutputFolder(string subj)
 		{
-            //string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-			string defaultDirectory = @"\\nas\public\Agris\GenesysTestFolder";
 			#if FOR_EE
+			// the user must have authenticated access to the network share
 				string defaultDirectory = "\\celerra-fs.lauteri.inter\Users\TaaviK\Desktop\Vahekataloog";
+			#else
+	            string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+			// save to network share. 
+			//string defaultDirectory = @"\\nas\public\Agris\GenesysTestFolder";
 			#endif
 			return string.Format(@"{0}\{1}", defaultDirectory, subj);
 		}
