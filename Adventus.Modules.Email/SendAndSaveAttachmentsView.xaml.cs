@@ -87,7 +87,8 @@ namespace Adventus.Modules.Email
 			parameters.Clear();
             parameters.Add("CommandParameter", interaction);
             Command.Execute(parameters);
-		// save email to filesystem
+		// save email to filesystem. Binary contents of the outgoing email at this point is not available from API. Email created by an agent has not yet traveled the Business Process.
+		// available are only email parts created by an agent. .eml file has to be assembled from the email parts.
             Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("SaveAttachments");
 			parameters.Clear();
 			Model.Clear();

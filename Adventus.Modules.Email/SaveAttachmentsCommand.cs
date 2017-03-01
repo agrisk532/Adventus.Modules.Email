@@ -157,7 +157,21 @@ namespace Adventus.Modules.Email
 					}
 
 					string messageFrom = (interaction.GetAttachedData("FromAddress") ?? "").ToString();
-					string messageTo = interactionEmail.EntrepriseEmailInteractionCurrent.To[0];
+					string messageTo;
+					try
+					{
+						messageTo = interactionEmail.EntrepriseEmailInteractionCurrent.To[0] ?? "";
+					}
+					catch (Exception e)
+					{
+						MessageBox.Show("Please enter message recipient", "Attention");
+						return false;
+					}
+					if(String.IsNullOrEmpty(messageTo))
+					{
+						MessageBox.Show("Please enter message recipient", "Attention");
+						return false;
+					}
 					string messageDate = interactionEmail.EntrepriseEmailInteractionCurrent.StartDate.ToString("dd.MM.yyyy HH:mm");
 
 					string messageText = interactionEmail.EntrepriseEmailInteractionCurrent.MessageText;    /**< without html formatting */

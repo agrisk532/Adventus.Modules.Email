@@ -10,7 +10,7 @@
     <Grid>
         <commonControls:InteractionToolBarButton Name="buttonSave" ToolTip="Kataloog" Click="SaveAttachmentsButton_Click" Visibility="{Binding Path=SaveButtonVisibility}">
             <StackPanel Orientation="Horizontal">
-                <commonControls:MagicImage ResourceKey="Common.Floppy" Width="24" Height="24"/>
+                <Image Width="24" Height="24" Source="Kataloog.png"/>
             </StackPanel>
         </commonControls:InteractionToolBarButton>
     </Grid>

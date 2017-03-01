@@ -140,6 +140,10 @@
   <ItemGroup>
     <Content Include="README.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Kataloog.png" />
+    <Resource Include="KataloogAndSend.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>xcopy "C:\Program Files (x86)\GCTI\Workspace Desktop Edition" "$(TargetDir)" /y /i /s
