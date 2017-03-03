@@ -60,6 +60,11 @@ namespace Adventus.Modules.Email
                 interaction = Model.Interaction;
                 interactionEmail = interaction as IInteractionEmail;
 
+				Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = interaction.Agent.ConfPerson;
+				Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
+				Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc1 = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc["Annex"];
+				string value = (string)kvc1["AnnexName"];
+
                 if (interaction == null)
                 {
                     MessageBox.Show("Interaction is NULL");
