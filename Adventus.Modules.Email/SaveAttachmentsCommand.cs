@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
+using Genesyslab.Desktop.Modules.Core.Model.Agents;
 using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
 using System.IO;
 using System.Text;
@@ -33,12 +34,16 @@ namespace Adventus.Modules.Email
         public IInteraction interaction { get; set; }
         public IInteractionEmail interactionEmail { get; set; }
 		public const int MAX_SUBJECT_LENGTH = 20;
+		public string OutputFolder;		// for saving .eml and attachments
+		public string Subject;			// mangled subject
         
         public SaveAttachmentsCommand(IObjectContainer container, ILogger logger)
         {
 			this.container = container;
 			this.log = logger;
 			log.Info("SaveAttachmentsCommand() entered");
+			OutputFolder = String.Empty;
+			Subject = String.Empty;
         }
 
 /** \brief Command implementation
@@ -60,24 +65,42 @@ namespace Adventus.Modules.Email
                 interaction = Model.Interaction;
                 interactionEmail = interaction as IInteractionEmail;
 
-				Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = interaction.Agent.ConfPerson;
-				Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
-				Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc1 = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc["Annex"];
-				string value = (string)kvc1["AnnexName"];
-
                 if (interaction == null)
                 {
                     MessageBox.Show("Interaction is NULL");
-                    return true;
+                    return true;	// stop execution of command chain
                 }
                 else
                 if(interactionEmail == null)
                 {
                     MessageBox.Show("Interaction is not of IInteractionEmail type");
-                    return true;  // stop execution of command chain
+                    return true;	// stop execution of command chain
                 }
                 else
 				{
+					// Get subject
+					Subject = GetSubject();
+
+					// create folder where files will be written. It already includes subject at the end of the path
+					OutputFolder = GetOutputFolder();
+
+					for(;;)
+					{
+						try
+						{
+							if (!Directory.Exists(OutputFolder))
+							{
+								Directory.CreateDirectory(OutputFolder);
+							}
+							break;
+						}
+						catch (Exception exception)
+						{
+							MessageBox.Show(string.Format("Exception at creating folder at {0}: {1}. Using folder on Desktop.", OutputFolder, exception.Message), "Attention");
+							OutputFolder = SetDesktopOutputFolder() + "\\" + Subject;
+						}
+					}
+
 					//var cfg = container.Resolve<IConfigurationService>();
 					//var statServer = cfg.AvailableConnections.Where(item => item.Type.Equals(Genesyslab.Platform.Configuration.Protocols.Types.CfgAppType.CFGStatServer)).ToList();
 					//var ServerInformation = statServer[0].ConnectionParameters[0].ServerInformation;
@@ -178,32 +201,24 @@ namespace Adventus.Modules.Email
 						return false;
 					}
 					string messageDate = interactionEmail.EntrepriseEmailInteractionCurrent.StartDate.ToString("dd.MM.yyyy HH:mm");
-
 					string messageText = interactionEmail.EntrepriseEmailInteractionCurrent.MessageText;    /**< without html formatting */
 					string structuredMessageText = interactionEmail.EntrepriseEmailInteractionCurrent.StructuredText;   /**< with html formatting */
-					// mangle email subject
-					string subj = RemoveSpecialChars(interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "");
-					if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0, MAX_SUBJECT_LENGTH);
 
-					string outputFolder = GetOutputFolder(subj);
-					string path = Path.Combine(outputFolder, subj + ".eml");
-					if (!Directory.Exists(outputFolder))
-					{
-						Directory.CreateDirectory(outputFolder);
-					}
+					string path = Path.Combine(OutputFolder, Subject + ".eml");
 
 					// Binary content available. This is for incoming emails. They already have traveled the Business Process (URS).
 					if (interactionContent.Content != null)
 					{
-						if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
-						if (File.Exists(path))   /**< file is already on disk */
-						{
-							return false;  //return and continue command chain
-						}
-						else
+						try
 						{
 							File.WriteAllBytes(path, interactionContent.Content);
+							if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);						
 						}
+						catch (Exception ex)
+						{
+							MessageBox.Show(string.Format("Cannot save file {0}: {1}", path, ex.ToString()), "Attention");
+						}
+						
 					}
 					// Binary content not available. It is for outgoing emails, since email composed by agent may not be the final version sent out by Genesys. It can be changed by Business Process (URS).
 					// Here we save email created by agent.
@@ -227,14 +242,17 @@ namespace Adventus.Modules.Email
 							mailMessage.Attachments.Add(new System.Net.Mail.Attachment(pathToAttachment));
 						}
 
-						if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
-						if (File.Exists(path))   /**< don't download attachment if it's already on disk */
-						{
-							return false;	//return and continue command chain
-						}
 						if (mailMessage != null)
 						{
-							mailMessage.Save(path);
+							try
+							{
+								mailMessage.Save(path);
+								if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);						
+							}
+							catch(Exception ex)
+							{
+								MessageBox.Show(string.Format("Cannot save file {0}: {1}", path, ex.ToString()), "Attention");
+							}
 						}
 						mailMessage.Dispose();
 					}
@@ -326,20 +344,45 @@ namespace Adventus.Modules.Email
 			}
 
         }
-
-		private string GetOutputFolder(string subj)
+		// Mangle Subject
+		private string GetSubject()
 		{
-			#if FOR_EE
-			// the user must have authenticated access to the network share
-				string defaultDirectory = "\\celerra-fs.lauteri.inter\Users\TaaviK\Desktop\Vahekataloog";
-			#else
-	            string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-			// save to network share. 
-			//string defaultDirectory = @"\\nas\public\Agris\GenesysTestFolder";
-			#endif
-			return string.Format(@"{0}\{1}", defaultDirectory, subj);
+			string subj = RemoveSpecialChars(interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "");
+			if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0, MAX_SUBJECT_LENGTH);
+			return subj;
 		}
 
+		// The folder where files will be written. If not configured, it is the agent's PC Desktop folder
+		private string GetOutputFolder()
+		{
+			string defaultDirectory = String.Empty;
+			try
+			{
+				Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = interaction.Agent.ConfPerson;
+				Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
+				Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc1 = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc["custom-email-content-save"];
+				defaultDirectory = (string)kvc1["email-content-save-path"];
+			}
+			catch (Exception e)
+			{
+				defaultDirectory = SetDesktopOutputFolder();
+			}
+
+			if(String.IsNullOrEmpty(defaultDirectory))
+			{
+				defaultDirectory = SetDesktopOutputFolder();
+			}
+
+			return string.Format(@"{0}\{1}", defaultDirectory, Subject);
+		}
+//
+		private string SetDesktopOutputFolder()
+		{
+			string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+			MessageBox.Show(string.Format("Output folder custom-email-content-save/email-content-save-path not configured.\nUsing {0}.", defaultDirectory), "Attention");
+			return defaultDirectory;
+		}
+//
 		private void ucsConnection_Closed(object sender, EventArgs e)
 		{
 			//throw new NotImplementedException();
@@ -363,32 +406,21 @@ namespace Adventus.Modules.Email
  */       
         public string DownloadAttachment(UniversalContactServerProtocol ucsConnection, string documentId, string documentName, string emailSubject)
         {
-            try
+			string path = Path.Combine(OutputFolder, documentName);
+
+			RequestGetDocument request = new RequestGetDocument();
+			request.DocumentId = documentId;
+			request.IncludeBinaryContent = true;
+			EventGetDocument eventGetDoc = (EventGetDocument)ucsConnection.Request(request);
+			try
 			{
-				string subj = RemoveSpecialChars(emailSubject);
-				if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0, MAX_SUBJECT_LENGTH);
-				string str = GetOutputFolder(subj);
-				string path = Path.Combine(str, documentName);
-				if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
-
-				if (File.Exists(path))   /**< don't download attachment if it's already on disk */
-				{
-					return path;
-				}
-				if (!Directory.Exists(str))
-				{
-					Directory.CreateDirectory(str);
-				}
-
-				RequestGetDocument request = new RequestGetDocument();
-				request.DocumentId = documentId;
-				request.IncludeBinaryContent = true;
-				EventGetDocument eventGetDoc = (EventGetDocument)ucsConnection.Request(request);
 				File.WriteAllBytes(path, eventGetDoc.Content);
+				if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
 			}
 			catch (Exception exception)
             {
-				MessageBox.Show(string.Format("Exception in DownloadAttachment. {0}", exception.ToString()), "Attention");
+				MessageBox.Show(string.Format("Exception at saving attachment. Path: {0}. {1}\nOperation skipped.", path, exception.Message), "Attention");
+				return null;
             }
             return null;
         }
