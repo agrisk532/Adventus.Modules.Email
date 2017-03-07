@@ -351,6 +351,30 @@ namespace Adventus.Modules.Email
 			if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0, MAX_SUBJECT_LENGTH);
 			return subj;
 		}
+		// read configuration options
+		private string GetConfigurationOption(string section, string option)
+		{
+			string opt = String.Empty;
+			try
+			{
+				Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = interaction.Agent.ConfPerson;
+				Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
+				Genesyslab.Platform.Commons.Collections.KeyValueCollection sect = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc[section];
+				opt = (string)sect[option];
+			}
+			catch (Exception e)
+			{
+				opt = null;
+			}
+
+			if(String.IsNullOrEmpty(opt))
+			{
+				opt = null;
+			}
+
+			return opt;
+		}
+
 
 		// The folder where files will be written. If not configured, it is the agent's PC Desktop folder
 		private string GetOutputFolder()
@@ -358,10 +382,7 @@ namespace Adventus.Modules.Email
 			string defaultDirectory = String.Empty;
 			try
 			{
-				Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = interaction.Agent.ConfPerson;
-				Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
-				Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc1 = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc["custom-email-content-save"];
-				defaultDirectory = (string)kvc1["email-content-save-path"];
+				defaultDirectory = GetConfigurationOption("custom-email-content-save", "email-content-save-path");
 			}
 			catch (Exception e)
 			{
@@ -497,56 +518,56 @@ namespace Adventus.Modules.Email
     }
 
 	public static class MailMessageExt
-{
-    public static void Save(this MailMessage Message, string FileName)
-    {
-        Assembly assembly = typeof(SmtpClient).Assembly;
-        Type _mailWriterType = 
-          assembly.GetType("System.Net.Mail.MailWriter");
-
-        using (FileStream _fileStream = 
-               new FileStream(FileName, FileMode.Create))
-        {
-            // Get reflection info for MailWriter contructor
-            ConstructorInfo _mailWriterContructor =
-                _mailWriterType.GetConstructor(
-                    BindingFlags.Instance | BindingFlags.NonPublic,
-                    null,
-                    new Type[] { typeof(Stream) }, 
-                    null);
-
-            // Construct MailWriter object with our FileStream
-            object _mailWriter = 
-              _mailWriterContructor.Invoke(new object[] { _fileStream });
-
-            // Get reflection info for Send() method on MailMessage
-            MethodInfo _sendMethod =
-                typeof(MailMessage).GetMethod(
-                    "Send",
-                    BindingFlags.Instance | BindingFlags.NonPublic);
-
-            // Call method passing in MailWriter
-			_sendMethod.Invoke(
-				Message,
-				BindingFlags.Instance | BindingFlags.NonPublic,
-				null,
-				new object[] { _mailWriter, true, true },
-				null);
-
-            // Finally get reflection info for Close() method on our MailWriter
-            MethodInfo _closeMethod =
-                _mailWriter.GetType().GetMethod(
-                    "Close",
-                    BindingFlags.Instance | BindingFlags.NonPublic);
-
-            // Call close method
-            _closeMethod.Invoke(
-                _mailWriter,
-                BindingFlags.Instance | BindingFlags.NonPublic,
-                null,
-                new object[] { },
-                null);
-        }
-    }
-}
+	{
+	    public static void Save(this MailMessage Message, string FileName)
+	    {
+	        Assembly assembly = typeof(SmtpClient).Assembly;
+	        Type _mailWriterType = 
+	          assembly.GetType("System.Net.Mail.MailWriter");
+	
+	        using (FileStream _fileStream = 
+	               new FileStream(FileName, FileMode.Create))
+	        {
+	            // Get reflection info for MailWriter contructor
+	            ConstructorInfo _mailWriterContructor =
+	                _mailWriterType.GetConstructor(
+	                    BindingFlags.Instance | BindingFlags.NonPublic,
+	                    null,
+	                    new Type[] { typeof(Stream) }, 
+	                    null);
+	
+	            // Construct MailWriter object with our FileStream
+	            object _mailWriter = 
+	              _mailWriterContructor.Invoke(new object[] { _fileStream });
+	
+	            // Get reflection info for Send() method on MailMessage
+	            MethodInfo _sendMethod =
+	                typeof(MailMessage).GetMethod(
+	                    "Send",
+	                    BindingFlags.Instance | BindingFlags.NonPublic);
+	
+	            // Call method passing in MailWriter
+				_sendMethod.Invoke(
+					Message,
+					BindingFlags.Instance | BindingFlags.NonPublic,
+					null,
+					new object[] { _mailWriter, true, true },
+					null);
+	
+	            // Finally get reflection info for Close() method on our MailWriter
+	            MethodInfo _closeMethod =
+	                _mailWriter.GetType().GetMethod(
+	                    "Close",
+	                    BindingFlags.Instance | BindingFlags.NonPublic);
+	
+	            // Call close method
+	            _closeMethod.Invoke(
+	                _mailWriter,
+	                BindingFlags.Instance | BindingFlags.NonPublic,
+	                null,
+	                new object[] { },
+	                null);
+	        }
+	    }
+	}
 }

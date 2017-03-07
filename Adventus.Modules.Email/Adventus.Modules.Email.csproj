@@ -146,7 +146,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>xcopy "C:\Program Files (x86)\GCTI\Workspace Desktop Edition" "$(TargetDir)" /y /i /s
+    <PreBuildEvent>xcopy /y /i /s "C:\Program Files (x86)\GCTI\Workspace Desktop Edition\*" "$(TargetDir)"
 copy "$(ProjectDir)\Adventus.Modules.Email.module-config" "$(TargetDir)"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
