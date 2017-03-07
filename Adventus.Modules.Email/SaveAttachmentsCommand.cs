@@ -402,6 +402,7 @@ namespace Adventus.Modules.Email
 			string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 			MessageBox.Show(string.Format("Output folder custom-email-content-save/email-content-save-path not configured.\nUsing {0}.", defaultDirectory), "Attention");
 			return defaultDirectory;
+
 		}
 //
 		private void ucsConnection_Closed(object sender, EventArgs e)
