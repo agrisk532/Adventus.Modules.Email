@@ -113,17 +113,28 @@ namespace Adventus.Modules.Email
 						}
 					}
 
-					//var cfg = container.Resolve<IConfigurationService>();
+					var cfg = container.Resolve<IConfigurationService>();
 					//var statServer = cfg.AvailableConnections.Where(item => item.Type.Equals(Genesyslab.Platform.Configuration.Protocols.Types.CfgAppType.CFGStatServer)).ToList();
 					//var ServerInformation = statServer[0].ConnectionParameters[0].ServerInformation;
+					var contactServer = cfg.AvailableConnections.Where(item => item.Type.Equals(Genesyslab.Platform.Configuration.Protocols.Types.CfgAppType.CFGContactServer)).ToList();
+					var serverInformation = contactServer[0].ConnectionParameters[0].ServerInformation;
+					var appName = contactServer[0].Name;
+					var host = serverInformation.ConnectedHost.Name;
+					var s_port = serverInformation.ConnectedPort;
+					int port;
+		            if (!Int32.TryParse(s_port, out port))
+					{
+						MessageBox.Show(string.Format("Configured contact server port cannot be converted to int: {0}. Email not saved.", s_port), "Attention");
+						return true;	// Cannot parse server port. Stop execution of the command chain.
+					}
+						Console.WriteLine("String could not be parsed.");
 
 					// connection to UCS contact server
 					UniversalContactServerProtocol ucsConnection;
-#if FOR_EE
-					ucsConnection = new UniversalContactServerProtocol(new Endpoint("UniversalContactServer", "ling.lauteri.inter", 5130));
-#else
-					ucsConnection = new UniversalContactServerProtocol(new Endpoint("eS_UniversalContactServer", "genesys1", 6120));
-#endif
+					//ucsConnection = new UniversalContactServerProtocol(new Endpoint("UniversalContactServer", "ling.lauteri.inter", 5130));
+					//ucsConnection = new UniversalContactServerProtocol(new Endpoint("eS_UniversalContactServer", "genesys1", 6120));
+
+					ucsConnection = new UniversalContactServerProtocol(new Endpoint(appName, host, port));
 
 					//ucsConnection = new UniversalContactServerProtocol(new Endpoint(statServer[0].Name, ServerInformation.Host.Name, Int32.Parse(ServerInformation.Port)));
 					ucsConnection.Opened += new EventHandler(ucsConnection_Opened);
