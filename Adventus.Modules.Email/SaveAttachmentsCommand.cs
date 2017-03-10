@@ -5,8 +5,8 @@ using System.Windows.Threading;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
-using Genesyslab.Desktop.Modules.Core.Model.Agents;
 using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
+using Genesyslab.Enterprise.Model.Contact;
 using System.IO;
 using System.Text;
 using System.Linq;
@@ -19,6 +19,8 @@ using Genesyslab.Platform.Contacts.Protocols.ContactServer.Events;
 using Genesyslab.Desktop.Modules.Core.SDK.Configurations;
 using System.Net.Mail;
 using System.Reflection;
+using Genesyslab.Enterprise.Model.ServiceModel;
+using Genesyslab.Enterprise.Services;
 
 namespace Adventus.Modules.Email
 {
@@ -113,6 +115,7 @@ namespace Adventus.Modules.Email
 						}
 					}
 
+					// read contact server location from the config server
 					var cfg = container.Resolve<IConfigurationService>();
 					//var statServer = cfg.AvailableConnections.Where(item => item.Type.Equals(Genesyslab.Platform.Configuration.Protocols.Types.CfgAppType.CFGStatServer)).ToList();
 					//var ServerInformation = statServer[0].ConnectionParameters[0].ServerInformation;
@@ -178,11 +181,13 @@ namespace Adventus.Modules.Email
 					catch (Exception e)
 					{
 						MessageBox.Show("Please enter message recipient", "Attention");
+						CloseUCSConnection(ucsConnection);
 						return false;
 					}
 					if (String.IsNullOrEmpty(messageTo))
 					{
 						MessageBox.Show("Please enter message recipient", "Attention");
+						CloseUCSConnection(ucsConnection);
 						return false;
 					}
 					string messageDate = interactionEmail.EntrepriseEmailInteractionCurrent.StartDate.ToString("dd.MM.yyyy HH:mm");
@@ -216,6 +221,102 @@ namespace Adventus.Modules.Email
 					else
 					if (interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
 					{
+						if(interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Subtype == "OutboundReply")
+						{
+							while(true)
+							{
+
+							// add attachments from the parent interaction
+								string InteractionParentID = interactionEmail.EntrepriseEmailInteractionCurrent.ParentID;
+	
+				                if (String.IsNullOrEmpty(InteractionParentID))
+							    {
+				                    MessageBox.Show("Interaction ParentID is null. Cannot add parent interaction attachments", "Attention");
+									break;
+								}
+				                else
+				                {
+				                // add attachments from ParentID interaction to this interaction
+						            Genesyslab.Enterprise.Services.IContactService service = container.Resolve<IEnterpriseServiceProvider>().Resolve<IContactService>("contactService");
+						            Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService service2 = container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService>();
+									Genesyslab.Enterprise.Model.Channel.IClientChannel channel = container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Protocol.IChannelManager>().Register(service2.UCSApp, "IW@ContactService");
+	
+									ICollection<IAttachment> attachments = new List<IAttachment>();
+				                    ICollection<IAttachment> attachments2 = new List<IAttachment>();
+				                    if ((channel != null) && (channel.State == ChannelState.Opened))
+				                    {
+				                        attachments = service.GetAttachments(channel, InteractionParentID, false);  // without attachment body
+				                    }
+				                    if (attachments.Count > 0)
+				                    {
+				                        foreach (IAttachment attachment in attachments)
+				                        {
+				                            if (attachment != null)
+				                            {
+				                                service.AddAttachment(channel, interaction.EntrepriseInteractionCurrent.Id, attachment.Id);
+				                            }
+				                        }
+				                    }
+				                    attachments2 = service.GetAttachments(channel, interaction.EntrepriseInteractionCurrent.Id, true);  // with attachment body
+				                    break;
+				                }
+				            }
+
+							ICommandManager commandManager = container.Resolve<ICommandManager>();
+							IDictionary<string, object> parameters1 = new Dictionary<string, object>();
+							parameters1.Add("CommandParameter", interactionEmail);
+							commandManager.GetChainOfCommandByName("InteractionEmailSave").Execute(parameters1);
+
+							request = new RequestGetInteractionContent();
+							request.InteractionId = interaction.EntrepriseInteractionCurrent.Id;
+							request.IncludeBinaryContent = true;
+							request.IncludeAttachments = true;
+
+							eventGetIxnContent = (EventGetInteractionContent)ucsConnection.Request(request);
+
+							messageText = interactionEmail.EntrepriseEmailInteractionCurrent.MessageText;    /**< without html formatting */
+							structuredMessageText = interactionEmail.EntrepriseEmailInteractionCurrent.StructuredText;   /**< with html formatting */
+							// Subfolder name for the output folder
+							SubjectTrimmed = GetSubjectTrimmed();
+							// create folder where files will be written. It includes trimmed subject at the end of the path
+							OutputFolderName = GetOutputFolderName(SubjectTrimmed);
+							emlFilePath = Path.Combine(OutputFolderName, SubjectTrimmed + ".eml");
+
+							for (int i = 0; i < 3; i++)
+							{
+								if (i == 2)
+								{
+									MessageBox.Show(string.Format("Cannot create output folder. Exiting.", "Attention"));
+									return true; // Cannot create output folder. Stop execution of the command chain
+								}
+		
+								try
+								{
+									if (!Directory.Exists(OutputFolderName))
+									{
+										Directory.CreateDirectory(OutputFolderName);
+									}
+									break;
+								}
+								catch (Exception exception)
+								{
+									MessageBox.Show(string.Format("Exception creating folder at {0}: {1}. Using folder on Desktop.", OutputFolderName, exception.Message), "Attention");
+									OutputFolderName = SetDesktopOutputFolder() + "\\" + SubjectTrimmed;
+								}
+							}
+
+							attachmentList = eventGetIxnContent.Attachments;
+							interactionContent = eventGetIxnContent.InteractionContent;
+			
+							if (eventGetIxnContent == null)
+							{
+								MessageBox.Show(string.Format("Request to UniversalContactServer failed. Save operation stopped.", "Attention"));
+								CloseUCSConnection(ucsConnection);
+								return true;    // stop execution of the command chain
+							}
+		
+						}
+
 						opt = GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_OUTBOUND_EMAIL_SAVE_OPTION);
 						if (opt == "eml")
 						{
@@ -235,11 +336,11 @@ namespace Adventus.Modules.Email
 							SaveAttachments(ucsConnection, attachmentList);
 							SaveBinaryContent(messageFrom, messageTo, messageText, structuredMessageText, emlFilePath, interactionContent);
 						}
-
 					}
 					else
 					{
 						MessageBox.Show("I don't know what to do. It is neither inbound nor outbound email.", "Attention");
+						CloseUCSConnection(ucsConnection);
 						return true;	// stop execution of command chain
 					}
 
