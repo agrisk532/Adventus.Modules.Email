@@ -6,10 +6,12 @@ using Genesyslab.Desktop.Infrastructure;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
-using Genesyslab.Desktop.Modules.OpenMedia.Windows.Interactions.MediaView.Email.InteractionInboundEmailView;
-using Genesyslab.Desktop.WPFCommon;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
-using Genesyslab.Desktop.Modules.Windows.Event;
+using Genesyslab.Enterprise.Interaction;
+using Genesyslab.Enterprise.Model.ServiceModel;
+using Genesyslab.Enterprise.Services;
+using Genesyslab.Enterprise.Model.Contact;
+using Genesyslab.Platform.Commons.Protocols;
 
 namespace Adventus.Modules.Email
 {
@@ -77,17 +79,65 @@ namespace Adventus.Modules.Email
  */
         private void SendAndSaveAttachmentsButton_Click(object sender, RoutedEventArgs e)
         {
-		// send email
-            IDictionary<string, object> parameters = new Dictionary<string, object>();
-
 	        IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
             IInteraction interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
             IInteractionEmail interactionEmail = interaction as IInteractionEmail;
-			IChainOfCommand Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("InteractionEmailSend");
+
+			if (interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Subtype != "OutboundNew")
+			{
+				while (true)
+				{
+
+					// add attachments from the parent interaction
+					string InteractionParentID = interactionEmail.EntrepriseEmailInteractionCurrent.ParentID;
+
+					if (String.IsNullOrEmpty(InteractionParentID))
+					{
+						MessageBox.Show("Interaction ParentID is null. Cannot add parent interaction attachments", "Attention");
+						break;
+					}
+					else
+					{
+						// add attachments from ParentID interaction to this interaction
+						Genesyslab.Enterprise.Services.IContactService service = container.Resolve<IEnterpriseServiceProvider>().Resolve<IContactService>("contactService");
+						Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService service2 = container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService>();
+						Genesyslab.Enterprise.Model.Channel.IClientChannel channel = container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Protocol.IChannelManager>().Register(service2.UCSApp, "IW@ContactService");
+
+						ICollection<IAttachment> attachments = new List<IAttachment>();
+						ICollection<IAttachment> attachments2 = new List<IAttachment>();
+						if ((channel != null) && (channel.State == ChannelState.Opened))
+						{
+							attachments = service.GetAttachments(channel, InteractionParentID, false);  // without attachment body
+						}
+						if (attachments.Count > 0)
+						{
+							foreach (IAttachment attachment in attachments)
+							{
+								if (attachment != null)
+								{
+									service.AddAttachment(channel, interaction.EntrepriseInteractionCurrent.Id, attachment.Id);
+								}
+							}
+						}
+						attachments2 = service.GetAttachments(channel, interaction.EntrepriseInteractionCurrent.Id, true);  // with attachment body
+						break;
+					}
+				}
+			}
+
+            IDictionary<string, object> parameters = new Dictionary<string, object>();
+			ICommandManager commandManager = container.Resolve<ICommandManager>();
+			IChainOfCommand Command = commandManager.GetChainOfCommandByName("InteractionEmailSave");
+			parameters.Clear();
+			parameters.Add("CommandParameter", interactionEmail);
+			commandManager.GetChainOfCommandByName("InteractionEmailSave").Execute(parameters);
+
+			Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("InteractionEmailSend");
 			parameters.Clear();
             parameters.Add("CommandParameter", interaction);
             Command.Execute(parameters);
-		// save email to filesystem. Binary contents of the outgoing email at this point is not available from API. Email created by an agent has not yet traveled the Business Process.
+		
+			// save email to filesystem. Binary contents of the outgoing email at this point is not available from API. Email created by an agent has not yet traveled the Business Process.
 		// available are only email parts created by an agent. .eml file has to be assembled from the email parts.
             Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("SaveAttachments");
 			parameters.Clear();
