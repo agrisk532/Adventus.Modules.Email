@@ -48,7 +48,7 @@ namespace Adventus.Modules.Email
             }
 
 			container.Resolve<IInteractionManager>().InteractionEvent += 
-                         new System.EventHandler<EventArgs<IInteraction>> (ExtensionSampleModule_InteractionEvent);
+				new System.EventHandler<EventArgs<IInteraction>> (ExtensionSampleModule_InteractionEvent);
         }
 
 
@@ -71,8 +71,8 @@ namespace Adventus.Modules.Email
  */
         public void Destroy()
         {
-		                     container.Resolve<IInteractionManager>().InteractionEvent -= 
-                         new System.EventHandler<EventArgs<IInteraction>> (ExtensionSampleModule_InteractionEvent);
+			container.Resolve<IInteractionManager>().InteractionEvent -= 
+				new System.EventHandler<EventArgs<IInteraction>> (ExtensionSampleModule_InteractionEvent);
         }
 
 /** \brief Event handler
@@ -83,68 +83,63 @@ namespace Adventus.Modules.Email
             IInteraction interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
             IInteractionEmail interactionEmail = interaction as IInteractionEmail;
 
-			if (interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Subtype != "OutboundNew")
-			{
-				while (true)
-				{
-
-					// add attachments from the parent interaction
-					string InteractionParentID = interactionEmail.EntrepriseEmailInteractionCurrent.ParentID;
-
-					if (String.IsNullOrEmpty(InteractionParentID))
-					{
-						MessageBox.Show("Interaction ParentID is null. Cannot add parent interaction attachments", "Attention");
-						break;
-					}
-					else
-					{
-						// add attachments from ParentID interaction to this interaction
-						Genesyslab.Enterprise.Services.IContactService service = container.Resolve<IEnterpriseServiceProvider>().Resolve<IContactService>("contactService");
-						Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService service2 = container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService>();
-						Genesyslab.Enterprise.Model.Channel.IClientChannel channel = container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Protocol.IChannelManager>().Register(service2.UCSApp, "IW@ContactService");
-
-						ICollection<IAttachment> attachments = new List<IAttachment>();
-						ICollection<IAttachment> attachments2 = new List<IAttachment>();
-						if ((channel != null) && (channel.State == ChannelState.Opened))
-						{
-							attachments = service.GetAttachments(channel, InteractionParentID, false);  // without attachment body
-						}
-						if (attachments.Count > 0)
-						{
-							foreach (IAttachment attachment in attachments)
-							{
-								if (attachment != null)
-								{
-									service.AddAttachment(channel, interaction.EntrepriseInteractionCurrent.Id, attachment.Id);
-								}
-							}
-						}
-						attachments2 = service.GetAttachments(channel, interaction.EntrepriseInteractionCurrent.Id, true);  // with attachment body
-						break;
-					}
-				}
-			}
-
             IDictionary<string, object> parameters = new Dictionary<string, object>();
 			ICommandManager commandManager = container.Resolve<ICommandManager>();
-			IChainOfCommand Command = commandManager.GetChainOfCommandByName("InteractionEmailSave");
-			parameters.Clear();
-			parameters.Add("CommandParameter", interactionEmail);
-			commandManager.GetChainOfCommandByName("InteractionEmailSave").Execute(parameters);
 
-			Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("InteractionEmailSend");
+			if (interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out && 
+				interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Subtype != "OutboundNew")
+			{
+
+				// add attachments from the parent interaction
+				string InteractionParentID = interactionEmail.EntrepriseEmailInteractionCurrent.ParentID;
+
+				if (String.IsNullOrEmpty(InteractionParentID))
+				{
+					MessageBox.Show("Interaction ParentID is null. Cannot add parent interaction attachments", "Attention");
+					return;
+				}
+				else
+				{
+					// add attachments from ParentID interaction to this interaction
+					Genesyslab.Enterprise.Services.IContactService service = container.Resolve<IEnterpriseServiceProvider>().Resolve<IContactService>("contactService");
+					Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService service2 = container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService>();
+					Genesyslab.Enterprise.Model.Channel.IClientChannel channel = container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Protocol.IChannelManager>().Register(service2.UCSApp, "IW@ContactService");
+
+					ICollection<IAttachment> attachments = new List<IAttachment>();
+					//ICollection<IAttachment> attachments2 = new List<IAttachment>();
+					if ((channel != null) && (channel.State == ChannelState.Opened))
+					{
+						attachments = service.GetAttachments(channel, InteractionParentID, false);  // without attachment body
+					}
+					if (attachments.Count > 0)
+					{
+						foreach (IAttachment attachment in attachments)
+						{
+							if (attachment != null)
+							{
+								service.AddAttachment(channel, interaction.EntrepriseInteractionCurrent.Id, attachment.Id);
+							}
+						}
+					}
+					//attachments2 = service.GetAttachments(channel, interaction.EntrepriseInteractionCurrent.Id, true);  // with attachment body
+				}
+
+				parameters.Clear();
+				parameters.Add("CommandParameter", interactionEmail);
+				commandManager.GetChainOfCommandByName("InteractionEmailSave").Execute(parameters);
+			}
+
 			parameters.Clear();
             parameters.Add("CommandParameter", interaction);
-            Command.Execute(parameters);
+            commandManager.GetChainOfCommandByName("InteractionEmailSend").Execute(parameters);
 		
 			// save email to filesystem. Binary contents of the outgoing email at this point is not available from API. Email created by an agent has not yet traveled the Business Process.
-		// available are only email parts created by an agent. .eml file has to be assembled from the email parts.
-            Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("SaveAttachments");
+			// available are only email parts created by an agent. .eml file has to be assembled from the email parts.
 			parameters.Clear();
 			Model.Clear();
 			Model.Interaction = interaction;
             parameters.Add("Model", Model);
-            Command.Execute(parameters);
+            commandManager.GetChainOfCommandByName("SaveAttachments").Execute(parameters);
         }
     }
 }
