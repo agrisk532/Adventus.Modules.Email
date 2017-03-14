@@ -38,52 +38,16 @@ namespace Adventus.Modules.Email
             container.RegisterType<ISaveAttachmentsViewModel, SaveAttachmentsViewModel>();
 
             // Put the "SaveAttachments" view in the region "BundleCustomButtonRegion" if Condition is true
-            viewManager.ViewsByRegionName["BundleCustomButtonRegion"].Add(new ViewActivator() { ViewType = typeof(ISaveAttachmentsView), ViewName = "SaveAttachments", ActivateView = true,
-                Condition = CheckCondition
-/* delegate code moved to the CheckCondition() method to make Visual Studio debugging easier
-                Condition = delegate(ref object context)
-                {
-                    IDictionary<string, object> contextDictionary = context as IDictionary<string, object>;
-                    if (contextDictionary.ContainsKey("Interaction"))
-                    {
-                        IInteraction interaction = contextDictionary["Interaction"] as IInteraction;    
-                        if (interaction != null)
-                        {
-                            if (interaction.EntrepriseInteractionCurrent.IdType.MediaType.ToString() == "Multimedia" &&
-                                interaction.EntrepriseInteractionCurrent.IdType.SubMediaType == "email")
-                            {    
-                                return true;
-                            }
-                        }
-                    }    
-                    return false;
-                }
- */
-            }
+            viewManager.ViewsByRegionName["BundleCustomButtonRegion"].Add(new ViewActivator()
+				{
+					ViewType = typeof(ISaveAttachmentsView), ViewName = "SaveAttachments", ActivateView = true, Condition = CheckCondition
+				}
             );
 
-            viewManager.ViewsByRegionName["BundleCustomButtonRegion"].Add(new ViewActivator() { ViewType = typeof(ISendAndSaveAttachmentsView), ViewName = "SendAndSaveAttachments", ActivateView = true,
-                Condition = CheckCondition
-/* delegate code moved to the CheckCondition() method to make Visual Studio debugging easier
-                Condition = delegate(ref object context)
-                {
-                    IDictionary<string, object> contextDictionary = context as IDictionary<string, object>;
-                    if (contextDictionary.ContainsKey("Interaction"))
-                    {
-                        IInteraction interaction = contextDictionary["Interaction"] as IInteraction;    
-                        if (interaction != null)
-                        {
-                            if (interaction.EntrepriseInteractionCurrent.IdType.MediaType.ToString() == "Multimedia" &&
-                                interaction.EntrepriseInteractionCurrent.IdType.SubMediaType == "email")
-                            {    
-                                return true;
-                            }
-                        }
-                    }    
-                    return false;
-                }
- */
-            }
+            viewManager.ViewsByRegionName["BundleCustomButtonRegion"].Add(new ViewActivator()
+				{ 
+					ViewType = typeof(ISendAndSaveAttachmentsView), ViewName = "SendAndSaveAttachments", ActivateView = true, Condition = CheckCondition
+				}
             );
 
 
@@ -120,11 +84,6 @@ namespace Adventus.Modules.Email
                         interaction.EntrepriseInteractionCurrent.IdType.SubMediaType == "email")
                     {
                         return true;  // we store also the email body
-//                        IInteractionEmail interactionEmail = interaction as IInteractionEmail;
-//                        if ((interactionEmail.EntrepriseEmailAttachments != null) && (interactionEmail.EntrepriseEmailAttachments.Count > 0))
-//                        {
-//                            return true;
-//                        }
                     }
                 }
             }    

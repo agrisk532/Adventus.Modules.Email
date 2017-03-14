@@ -1,11 +1,6 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.ComponentModel;
-using System.Windows.Input;
-using System.Windows.Threading;
 using System.Collections.Generic;
-using Genesyslab.Desktop.Infrastructure.DependencyInjection;
-using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 
 namespace Adventus.Modules.Email

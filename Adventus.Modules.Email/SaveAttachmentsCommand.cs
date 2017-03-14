@@ -6,7 +6,6 @@ using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
-using Genesyslab.Enterprise.Model.Contact;
 using System.IO;
 using System.Text;
 using System.Linq;
@@ -19,8 +18,6 @@ using Genesyslab.Platform.Contacts.Protocols.ContactServer.Events;
 using Genesyslab.Desktop.Modules.Core.SDK.Configurations;
 using System.Net.Mail;
 using System.Reflection;
-using Genesyslab.Enterprise.Model.ServiceModel;
-using Genesyslab.Enterprise.Services;
 
 namespace Adventus.Modules.Email
 {
@@ -96,7 +93,7 @@ namespace Adventus.Modules.Email
 					{
 						if (i == 2)
 						{
-							MessageBox.Show(string.Format("Cannot create output folder. Exiting.", "Attention"));
+							MessageBox.Show(string.Format("Cannot create output folder {0}. Exiting.", OutputFolderName), "Attention");
 							return true; // Cannot create output folder. Stop execution of the command chain
 						}
 
@@ -130,7 +127,6 @@ namespace Adventus.Modules.Email
 						MessageBox.Show(string.Format("Configured contact server port cannot be converted to int: {0}. Email not saved.", s_port), "Attention");
 						return true;	// Cannot parse server port. Stop execution of the command chain.
 					}
-						Console.WriteLine("String could not be parsed.");
 
 					// connection to UCS contact server
 					UniversalContactServerProtocol ucsConnection;
@@ -139,7 +135,6 @@ namespace Adventus.Modules.Email
 
 					ucsConnection = new UniversalContactServerProtocol(new Endpoint(appName, host, port));
 
-					//ucsConnection = new UniversalContactServerProtocol(new Endpoint(statServer[0].Name, ServerInformation.Host.Name, Int32.Parse(ServerInformation.Port)));
 					ucsConnection.Opened += new EventHandler(ucsConnection_Opened);
 					ucsConnection.Error += new EventHandler(ucsConnection_Error);
 					ucsConnection.Closed += new EventHandler(ucsConnection_Closed);
@@ -165,7 +160,7 @@ namespace Adventus.Modules.Email
 
 					if (eventGetIxnContent == null)
 					{
-						MessageBox.Show(string.Format("Request to UniversalContactServer failed. Save operation stopped.", "Attention"));
+						MessageBox.Show("Request to UniversalContactServer failed. Save operation skipped.", "Attention");
 						CloseUCSConnection(ucsConnection);
 						return true;    // stop execution of the command chain
 					}
@@ -182,13 +177,13 @@ namespace Adventus.Modules.Email
 					{
 						MessageBox.Show("Please enter message recipient", "Attention");
 						CloseUCSConnection(ucsConnection);
-						return false;
+						return false;	 // continue execution of the command chain
 					}
 					if (String.IsNullOrEmpty(messageTo))
 					{
 						MessageBox.Show("Please enter message recipient", "Attention");
 						CloseUCSConnection(ucsConnection);
-						return false;
+						return false;	// continue execution of the command chain
 					}
 					string messageDate = interactionEmail.EntrepriseEmailInteractionCurrent.StartDate.ToString("dd.MM.yyyy HH:mm");
 					string messageText = interactionEmail.EntrepriseEmailInteractionCurrent.MessageText;    /**< without html formatting */
@@ -205,6 +200,7 @@ namespace Adventus.Modules.Email
 						opt = GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_INBOUND_EMAIL_SAVE_OPTION);
 						if (opt == "eml")
 						{
+						// for inbound email binary content is available. We save it.
 							SaveBinaryContent(messageFrom, messageTo, messageText, structuredMessageText, emlFilePath, interactionContent);
 						}
 						else
@@ -224,8 +220,8 @@ namespace Adventus.Modules.Email
 						opt = GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_OUTBOUND_EMAIL_SAVE_OPTION);
 						if (opt == "eml")
 						{
-						// binary content not available. We must assemble it from parts.
-						// store attachments, assemble message including attachments, delete attachments
+						// for outbound emails binary content is not available. We must assemble it from agent created parts. This is not the email finally sent out by the business process.
+						// for this option == eml, store attachments, assemble message including attachments, delete attachments
 							SaveAttachments(ucsConnection, attachmentList);
 							SaveBinaryContent(messageFrom, messageTo, messageText, structuredMessageText, emlFilePath, interactionContent);
 							DeleteAttachments();
@@ -268,7 +264,7 @@ namespace Adventus.Modules.Email
 						sb.AppendLine();
 					}
 					MessageBox.Show(sb.ToString(), "Information");
-					Model.Clear();
+					//Model.Clear();
 					return false;
 				}
 			}
@@ -304,12 +300,12 @@ namespace Adventus.Modules.Email
 
 		private void SaveBinaryContent(string messageFrom, string messageTo, string messageText, string structuredMessageText, string emlFilePath, InteractionContent interactionContent)
 		{
-			// Binary content available. This is for incoming emails. They already have traveled the Business Process (URS).
+			// Binary content available. That is for incoming emails. They already have traveled the Business Process (URS).
 			if (interactionContent.Content != null)
 			{
 				SaveEMLBinaryContent(interactionContent, emlFilePath);
 			}
-			// Binary content not available. It is for outgoing emails, since email composed by agent may not be the final version sent out by Genesys. It can be changed by Business Process (URS).
+			// Binary content not available. That is for outgoing emails, since email composed by agent may not be the final version sent out by Genesys. It can be changed by Business Process (URS).
 			// Here we save email created by agent.
 			else
 			{
@@ -317,7 +313,7 @@ namespace Adventus.Modules.Email
 			}
 		}
 
-		// 
+		// attachments must be saved on the file system before calling this method. Use method SaveAttachments(ucsConnection, attachmentList)
 		private void AssembleAndSaveEMLBinaryContent(string messageFrom, string messageTo, string messageText, string structuredMessageText, string path)
 		{
 			MailMessage mailMessage = new MailMessage(messageFrom, messageTo);
@@ -487,7 +483,14 @@ namespace Adventus.Modules.Email
 			RequestGetDocument request = new RequestGetDocument();
 			request.DocumentId = documentId;
 			request.IncludeBinaryContent = true;
+
 			EventGetDocument eventGetDoc = (EventGetDocument)ucsConnection.Request(request);
+			if (eventGetDoc == null)
+			{
+				MessageBox.Show(string.Format("Attachment download from the UniversalContactServer failed. Save operation skipped.", "Attention"));
+				return null;
+			}
+
 			try
 			{
 				File.WriteAllBytes(path, eventGetDoc.Content);
@@ -572,6 +575,7 @@ namespace Adventus.Modules.Email
     //    }
     }
 
+	// this is for .net version 4.5
 	public static class MailMessageExt
 	{
 	    public static void Save(this MailMessage Message, string FileName)

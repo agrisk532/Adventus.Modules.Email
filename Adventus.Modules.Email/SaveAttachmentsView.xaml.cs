@@ -38,11 +38,11 @@ namespace Adventus.Modules.Email
         {
             IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
             Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
-            IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
-            if (interactionEmail == null)
-            {
-                MessageBox.Show("Interaction is not of IInteractionEmail type");
-            }
+            //IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
+            //if (interactionEmail == null)
+            //{
+            //    MessageBox.Show("Interaction is not of IInteractionEmail type");
+            //}
 
 			container.Resolve<IInteractionManager>().InteractionEvent += 
                          new System.EventHandler<EventArgs<IInteraction>> (ExtensionSampleModule_InteractionEvent);

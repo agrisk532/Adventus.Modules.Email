@@ -83,6 +83,7 @@ namespace Adventus.Modules.Email
             IInteraction interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
             IInteractionEmail interactionEmail = interaction as IInteractionEmail;
 
+			IChainOfCommand Command;
             IDictionary<string, object> parameters = new Dictionary<string, object>();
 			ICommandManager commandManager = container.Resolve<ICommandManager>();
 
@@ -123,23 +124,25 @@ namespace Adventus.Modules.Email
 					}
 					//attachments2 = service.GetAttachments(channel, interaction.EntrepriseInteractionCurrent.Id, true);  // with attachment body
 				}
-
+				Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("InteractionEmailSave");
 				parameters.Clear();
 				parameters.Add("CommandParameter", interactionEmail);
-				commandManager.GetChainOfCommandByName("InteractionEmailSave").Execute(parameters);
+				Command.Execute(parameters);
 			}
 
+			Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("InteractionEmailSend");
 			parameters.Clear();
             parameters.Add("CommandParameter", interaction);
-            commandManager.GetChainOfCommandByName("InteractionEmailSend").Execute(parameters);
+            Command.Execute(parameters);
 		
 			// save email to filesystem. Binary contents of the outgoing email at this point is not available from API. Email created by an agent has not yet traveled the Business Process.
 			// available are only email parts created by an agent. .eml file has to be assembled from the email parts.
+			Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("SaveAttachments");
 			parameters.Clear();
 			Model.Clear();
 			Model.Interaction = interaction;
             parameters.Add("Model", Model);
-            commandManager.GetChainOfCommandByName("SaveAttachments").Execute(parameters);
+            Command.Execute(parameters);
         }
     }
 }
