@@ -263,7 +263,7 @@ namespace Adventus.Modules.Email
 						sb.AppendLine(Model.EmailPartsPath[i]);
 						sb.AppendLine();
 					}
-					MessageBox.Show(sb.ToString(), "Information");
+					//MessageBox.Show(sb.ToString(), "Information");
 					//Model.Clear();
 					return false;
 				}
@@ -450,7 +450,7 @@ namespace Adventus.Modules.Email
 		private string SetDesktopOutputFolder()
 		{
 			string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-			MessageBox.Show(string.Format("Output folder " + CONFIG_SECTION_NAME_EMAIL_SAVE + "/" + CONFIG_OPTION_NAME_EMAIL_SAVE_PATH + " not configured.\nUsing {0}.", defaultDirectory), "Attention");
+			//MessageBox.Show(string.Format("Output folder " + CONFIG_SECTION_NAME_EMAIL_SAVE + "/" + CONFIG_OPTION_NAME_EMAIL_SAVE_PATH + " not configured.\nUsing {0}.", defaultDirectory), "Attention");
 			return defaultDirectory;
 
 		}
