@@ -26,9 +26,12 @@ namespace Adventus.Modules.Email
 			}
 			set
 			{
-	            saveButtonVisibility = value;
-				OnPropertyChanged("SaveButtonVisibility");
-	        }
+			    if (!value.Equals(saveButtonVisibility))
+				{
+		            saveButtonVisibility = value;
+					OnPropertyChanged("SaveButtonVisibility");
+				}
+			}
 		}
 
 		public Visibility SendAndSaveButtonVisibility
@@ -39,8 +42,11 @@ namespace Adventus.Modules.Email
 			}
 			set
 			{
-	            sendAndSaveButtonVisibility = value;
-				OnPropertyChanged("SendAndSaveButtonVisibility");
+			    if (!value.Equals(sendAndSaveButtonVisibility))
+				{
+		            sendAndSaveButtonVisibility = value;
+					OnPropertyChanged("SendAndSaveButtonVisibility");
+				}
 	        }
 		}
 

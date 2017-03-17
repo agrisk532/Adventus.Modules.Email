@@ -12,6 +12,7 @@ using Genesyslab.Enterprise.Model.ServiceModel;
 using Genesyslab.Enterprise.Services;
 using Genesyslab.Enterprise.Model.Contact;
 using Genesyslab.Platform.Commons.Protocols;
+using Genesyslab.Desktop.Modules.Windows.Interactions;
 
 namespace Adventus.Modules.Email
 {
@@ -49,23 +50,47 @@ namespace Adventus.Modules.Email
 
 			//container.Resolve<IInteractionManager>().InteractionEvent += 
 			//	new System.EventHandler<EventArgs<IInteraction>> (SASAV_InteractionEvent);
+			container.Resolve<IInteractionsWindowController>().InteractionViewCreated += SendAndSaveAttachmentsView_InteractionViewCreated;
         }
 
-
-		public void SASAV_InteractionEvent(object sender, EventArgs<IInteraction> e)
+		private void SendAndSaveAttachmentsView_InteractionViewCreated(object sender, InteractionViewEventArgs e)
 		{
-		      //Add a reference to: Genesyslab.Enterprise.Services.Multimedia.dll 
-		     //and Genesyslab.Enterprise.Model.dll object flag;
-		      IInteraction interaction = e.Value;
-			  if(interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In)
-			  {
+			IInteractionEmail eventInteractionEmail = e.Interaction as IInteractionEmail;
+			IInteractionEmail modelInteractionEmail = Model.Interaction as IInteractionEmail;
+
+			if(eventInteractionEmail.EntrepriseEmailInteractionCurrent.Id		== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id ||
+			   eventInteractionEmail.EntrepriseEmailInteractionCurrent.ParentID	== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id)
+			{
+				if(e.Interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
+				{
+					Model.SaveButtonVisibility = Visibility.Collapsed;
+					Model.SendAndSaveButtonVisibility = Visibility.Visible;
+				}
+				else
+				if(e.Interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In)
+				{
+					Model.SaveButtonVisibility = Visibility.Visible;
 					Model.SendAndSaveButtonVisibility = Visibility.Collapsed;
-			  }
-			  else
-			  {
-			  		Model.SendAndSaveButtonVisibility = Visibility.Visible;
-			  }
+				}
+			}
 		}
+
+
+
+		//public void SASAV_InteractionEvent(object sender, EventArgs<IInteraction> e)
+		//{
+		//      //Add a reference to: Genesyslab.Enterprise.Services.Multimedia.dll 
+		//     //and Genesyslab.Enterprise.Model.dll object flag;
+		//      IInteraction interaction = e.Value;
+		//	  if(interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In)
+		//	  {
+		//			Model.SendAndSaveButtonVisibility = Visibility.Collapsed;
+		//	  }
+		//	  else
+		//	  {
+		//	  		Model.SendAndSaveButtonVisibility = Visibility.Visible;
+		//	  }
+		//}
 
 /** \brief Executed once, at the view object destruction
  */
@@ -73,6 +98,7 @@ namespace Adventus.Modules.Email
         {
 			//container.Resolve<IInteractionManager>().InteractionEvent -= 
 			//	new System.EventHandler<EventArgs<IInteraction>> (SASAV_InteractionEvent);
+			container.Resolve<IInteractionsWindowController>().InteractionViewCreated -= SendAndSaveAttachmentsView_InteractionViewCreated;
         }
 
 /** \brief Event handler
