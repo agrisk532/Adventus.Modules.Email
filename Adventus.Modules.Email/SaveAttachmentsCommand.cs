@@ -411,6 +411,7 @@ namespace Adventus.Modules.Email
 				Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
 				Genesyslab.Platform.Commons.Collections.KeyValueCollection sect = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc[section];
 				opt = (string)sect[option];
+				opt = Environment.ExpandEnvironmentVariables(opt);
 			}
 			catch (Exception e)
 			{
