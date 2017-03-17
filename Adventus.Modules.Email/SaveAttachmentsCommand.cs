@@ -103,6 +103,20 @@ namespace Adventus.Modules.Email
 							{
 								Directory.CreateDirectory(OutputFolderName);
 							}
+							else
+							{
+								MessageBoxResult r = MessageBox.Show(String.Format("Folder \"{0}\" already exists. Overwrite?", OutputFolderName), "Question", MessageBoxButton.YesNo);
+								if(r == MessageBoxResult.Yes)
+								{
+									Array.ForEach(Directory.GetFiles(OutputFolderName), File.Delete);
+									break;
+								}
+								else
+								if(r == MessageBoxResult.No)
+								{
+									return false;	// continue execution of the command chain
+								}
+							}
 							break;
 						}
 						catch (Exception exception)
