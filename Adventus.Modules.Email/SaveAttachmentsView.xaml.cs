@@ -9,6 +9,8 @@ using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
 using Genesyslab.Desktop.Modules.OpenMedia.Windows.Interactions.MediaView.Email.InteractionInboundEmailView;
 using Genesyslab.Desktop.WPFCommon;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
+using Genesyslab.Desktop.Modules.Windows.Event;
+using Genesyslab.Desktop.Modules.Windows.Interactions;
 
 namespace Adventus.Modules.Email
 {
@@ -44,12 +46,36 @@ namespace Adventus.Modules.Email
             //    MessageBox.Show("Interaction is not of IInteractionEmail type");
             //}
 
-			container.Resolve<IInteractionManager>().InteractionEvent += 
-                         new System.EventHandler<EventArgs<IInteraction>> (ExtensionSampleModule_InteractionEvent);
+			//container.Resolve<IInteractionManager>().InteractionEvent += 
+   //                      new System.EventHandler<EventArgs<IInteraction>> (SAV_InteractionEvent);
+			container.Resolve<IInteractionsWindowController>().InteractionViewCreated += SaveAttachmentsView_InteractionViewCreated;
 		}
 
+		private void SaveAttachmentsView_InteractionViewCreated(object sender, InteractionViewEventArgs e)
+		{
+			//throw new NotImplementedException();
+		  if(e.Interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
+		  {
+				Model.SaveButtonVisibility = Visibility.Collapsed;
+				Model.SendAndSaveButtonVisibility = Visibility.Visible;
+		  }
+		  else
+		  if(e.Interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In)
+		  {
+				Model.SaveButtonVisibility = Visibility.Visible;
+				Model.SendAndSaveButtonVisibility = Visibility.Collapsed;
+		  }
+		}
 
-		void ExtensionSampleModule_InteractionEvent(object sender, EventArgs<IInteraction> e)
+		//void MyEventHandler(object eventObject)
+		//{
+		//	string eventMessage = eventObject as string;
+		//	if (eventMessage != null)
+		//	{}
+		//}
+
+
+		public void SAV_InteractionEvent(object sender, EventArgs<IInteraction> e)
 		{
 		      //Add a reference to: Genesyslab.Enterprise.Services.Multimedia.dll 
 		     //and Genesyslab.Enterprise.Model.dll object flag;
@@ -68,8 +94,8 @@ namespace Adventus.Modules.Email
  */
         public void Destroy()
         {
-			container.Resolve<IInteractionManager>().InteractionEvent -= 
-				new System.EventHandler<EventArgs<IInteraction>> (ExtensionSampleModule_InteractionEvent);
+			//container.Resolve<IInteractionManager>().InteractionEvent -= 
+			//	new System.EventHandler<EventArgs<IInteraction>> (SAV_InteractionEvent);
 
         }
 
