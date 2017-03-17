@@ -32,7 +32,7 @@ namespace Adventus.Modules.Email
         public SaveAttachmentsViewModel Model { get; set; }
         public IInteraction interaction { get; set; }
         public IInteractionEmail interactionEmail { get; set; }
-		public const int MAX_SUBJECT_LENGTH = 20;
+		public int subjectLength;
 		public string OutputFolderName;		// for saving .eml and attachments
 
 		// Config server parameters for person. Email and attachment save path
@@ -41,7 +41,9 @@ namespace Adventus.Modules.Email
 		// Config server parameters for person. Email save option name. It specifies what to save, email binary format, attachments or both
 		private const string CONFIG_OPTION_NAME_INBOUND_EMAIL_SAVE_OPTION = "email-content-save-options-inbound";  // values: 1)eml, 2)attachments, 3)all (eml+attachments)
 		private const string CONFIG_OPTION_NAME_OUTBOUND_EMAIL_SAVE_OPTION = "email-content-save-options-outbound"; // values: 1)eml, 2)attachments, 3)all (eml+attachments)
+		private const string CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH = "email-content-save-subject-length"; // values: 1)eml, 2)attachments, 3)all (eml+attachments)
 
+		private const string DEFAULT_SUBJECT_LENGTH = "25";
 		// constructor
         public SaveAttachmentsCommand(IObjectContainer container, ILogger logger)
         {
@@ -83,6 +85,9 @@ namespace Adventus.Modules.Email
                 }
                 else
 				{
+					// get subjectLength
+					subjectLength = GetSubjectLength();
+
 					// Subfolder name for the output folder
 					string SubjectTrimmed = GetSubjectTrimmed();
 
@@ -277,11 +282,23 @@ namespace Adventus.Modules.Email
 						sb.AppendLine(Model.EmailPartsPath[i]);
 						sb.AppendLine();
 					}
-					MessageBox.Show(sb.ToString(), "Information");
+					//MessageBox.Show(sb.ToString(), "Information");
 					return false;
 				}
 			}
         }
+
+		private int GetSubjectLength()
+		{
+			int sl;
+			string s = GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH) ?? DEFAULT_SUBJECT_LENGTH;
+            if (!Int32.TryParse(s, out sl))
+			{
+				MessageBox.Show(string.Format("Configured max Email subject length cannot be converted to int: {0}. Using {1} instead.", s, DEFAULT_SUBJECT_LENGTH), "Attention");
+				Int32.TryParse(DEFAULT_SUBJECT_LENGTH, out sl);	// Cannot parse server port. Stop execution of the command chain.
+			}
+			return sl;
+		}
 
 		private void DeleteAttachments()
 		{
@@ -411,7 +428,7 @@ namespace Adventus.Modules.Email
 		private string GetSubjectTrimmed()
 		{
 			string subj = RemoveSpecialChars(interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "Empty subject");
-			if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0, MAX_SUBJECT_LENGTH);
+			if (subj.Length > subjectLength) subj = subj.Substring(0, subjectLength);
 			return subj;
 		}
 		// read configuration options
