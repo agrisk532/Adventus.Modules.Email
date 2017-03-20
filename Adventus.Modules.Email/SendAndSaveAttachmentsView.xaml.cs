@@ -114,7 +114,8 @@ namespace Adventus.Modules.Email
 			ICommandManager commandManager = container.Resolve<ICommandManager>();
 
 			if (interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out && 
-				interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Subtype != "OutboundNew")
+				interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Subtype != "OutboundNew" &&
+				interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Subtype != "OutboundReply")
 			{
 
 				// add attachments from the parent interaction
