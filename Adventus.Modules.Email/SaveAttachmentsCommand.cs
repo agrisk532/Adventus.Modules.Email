@@ -18,6 +18,9 @@ using Genesyslab.Platform.Contacts.Protocols.ContactServer.Events;
 using Genesyslab.Desktop.Modules.Core.SDK.Configurations;
 using System.Net.Mail;
 using System.Reflection;
+using Genesyslab.Platform.Commons.Collections;
+using Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects;
+using Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.Queries;
 
 namespace Adventus.Modules.Email
 {
@@ -34,6 +37,7 @@ namespace Adventus.Modules.Email
         public IInteractionEmail interactionEmail { get; set; }
 		public int subjectLength;
 		public string OutputFolderName;		// for saving .eml and attachments
+		readonly IConfigurationService configurationService;
 
 		// Config server parameters for person. Email and attachment save path
 		private const string CONFIG_SECTION_NAME_EMAIL_SAVE	= "custom-email-content-save";		// section name
@@ -48,6 +52,7 @@ namespace Adventus.Modules.Email
         public SaveAttachmentsCommand(IObjectContainer container, ILogger logger)
         {
 			this.container = container;
+			this.configurationService = container.Resolve<IConfigurationService>();
 			this.log = logger;
 			log.Info("SaveAttachmentsCommand() entered");
 			OutputFolderName = String.Empty;
@@ -431,31 +436,58 @@ namespace Adventus.Modules.Email
 			if (subj.Length > subjectLength) subj = subj.Substring(0, subjectLength);
 			return subj;
 		}
+
 		// read configuration options
+		// first read application level configuration option, if not set, read user level config option, if not set use default option
 		private string GetConfigurationOption(string section, string option)
 		{
 			string opt = String.Empty;
-			try
-			{
-				Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = interaction.Agent.ConfPerson;
-				Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
-				Genesyslab.Platform.Commons.Collections.KeyValueCollection sect = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc[section];
-				opt = (string)sect[option];
-				opt = Environment.ExpandEnvironmentVariables(opt);
-			}
-			catch (Exception e)
-			{
-				opt = null;
-			}
 
-			if(String.IsNullOrEmpty(opt))
+			while(true)
 			{
-				opt = null;
+// application level configuration option
+				try
+				{
+					//string name = configurationService.MyApplication.Name;
+					CfgApplication app = configurationService.RetrieveObject<CfgApplication>((ICfgQuery)new CfgApplicationQuery()
+					{
+						Name = configurationService.MyApplication.Name
+					});
+	
+					KeyValueCollection kvc = app.Options;
+					KeyValueCollection sect = (KeyValueCollection) kvc[section];
+					opt = (string)sect[option];
+					opt = Environment.ExpandEnvironmentVariables(opt);
+					break;
+				}
+		        catch (Exception ex)
+		        {
+					// fall through to the user options
+		        }
+	
+// user level configuration option
+				try
+				{
+					Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = interaction.Agent.ConfPerson;
+					Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
+					Genesyslab.Platform.Commons.Collections.KeyValueCollection sect = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc[section];
+					opt = (string)sect[option];
+					opt = Environment.ExpandEnvironmentVariables(opt);
+					break;
+				}
+				catch (Exception e)
+				{
+					opt = null;
+				}
+	
+				if(String.IsNullOrEmpty(opt))
+				{
+					opt = null;
+				}
+				break;
 			}
-
 			return opt;
 		}
-
 
 		// The folder where files will be written. If not configured, it is agent's PC Desktop folder
 		private string GetOutputFolderName(string s)
