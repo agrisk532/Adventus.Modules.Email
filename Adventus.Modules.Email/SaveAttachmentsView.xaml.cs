@@ -54,23 +54,24 @@ namespace Adventus.Modules.Email
 		private void SaveAttachmentsView_InteractionViewCreated(object sender, InteractionViewEventArgs e)
 		{
 			IInteractionEmail eventInteractionEmail = e.Interaction as IInteractionEmail;
-			IInteractionEmail modelInteractionEmail = Model.Interaction as IInteractionEmail;
+			Model.Interaction = eventInteractionEmail;
+			//IInteractionEmail modelInteractionEmail = Model.Interaction as IInteractionEmail;
 
-			if(eventInteractionEmail.EntrepriseEmailInteractionCurrent.Id		== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id ||
-			   eventInteractionEmail.EntrepriseEmailInteractionCurrent.ParentID	== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id)
-			{
+			//if(eventInteractionEmail.EntrepriseEmailInteractionCurrent.Id		== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id ||
+			//   eventInteractionEmail.EntrepriseEmailInteractionCurrent.ParentID	== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id)
+			//{
 				if(e.Interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
 				{
 					Model.SaveButtonVisibility = Visibility.Collapsed;
-					Model.SendAndSaveButtonVisibility = Visibility.Visible;
+					//Model.SendAndSaveButtonVisibility = Visibility.Visible;
 				}
 				else
 				if(e.Interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In)
 				{
 					Model.SaveButtonVisibility = Visibility.Visible;
-					Model.SendAndSaveButtonVisibility = Visibility.Collapsed;
+					//Model.SendAndSaveButtonVisibility = Visibility.Collapsed;
 				}
-			}
+			//}
 		}
 
 		//public void SAV_InteractionEvent(object sender, EventArgs<IInteraction> e)

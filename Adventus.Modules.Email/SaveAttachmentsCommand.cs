@@ -287,7 +287,7 @@ namespace Adventus.Modules.Email
 						sb.AppendLine(Model.EmailPartsPath[i]);
 						sb.AppendLine();
 					}
-					//MessageBox.Show(sb.ToString(), "Information");
+					MessageBox.Show(sb.ToString(), "Information");
 					return false;
 				}
 			}
