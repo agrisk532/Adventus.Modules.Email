@@ -41,12 +41,12 @@ namespace Adventus.Modules.Email
         public void Create()
         {
             IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
-            Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
-            IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
-            if (interactionEmail == null)
-            {
-                MessageBox.Show("Interaction is not of IInteractionEmail type");
-            }
+            //Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
+            //IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
+            //if (interactionEmail == null)
+            //{
+               // MessageBox.Show("Interaction is not of IInteractionEmail type");
+            //}
 
 			//container.Resolve<IInteractionManager>().InteractionEvent += 
 			//	new System.EventHandler<EventArgs<IInteraction>> (SASAV_InteractionEvent);
@@ -55,9 +55,10 @@ namespace Adventus.Modules.Email
 
 		private void SendAndSaveAttachmentsView_InteractionViewCreated(object sender, InteractionViewEventArgs e)
 		{
-			IInteractionEmail eventInteractionEmail = e.Interaction as IInteractionEmail;
+			//IInteractionEmail eventInteractionEmail = e.Interaction as IInteractionEmail;
 			//IInteractionEmail modelInteractionEmail = Model.Interaction as IInteractionEmail;
-			Model.Interaction = eventInteractionEmail;
+			//Model.Interaction = eventInteractionEmail;
+			Model.Interaction = e.Interaction;
 
 			//if(eventInteractionEmail.EntrepriseEmailInteractionCurrent.Id		== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id ||
 			//   eventInteractionEmail.EntrepriseEmailInteractionCurrent.ParentID	== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id)
@@ -106,9 +107,20 @@ namespace Adventus.Modules.Email
  */
         private void SendAndSaveAttachmentsButton_Click(object sender, RoutedEventArgs e)
         {
-	        IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
-            IInteraction interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
-            IInteractionEmail interactionEmail = interaction as IInteractionEmail;
+	        //IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
+         //   IInteraction interaction_ = contextDictionary.TryGetValue("Interaction") as IInteraction;
+         //   IInteractionEmail interactionEmail_ = interaction_ as IInteractionEmail;
+			IInteraction interaction = Model.Interaction;
+			IInteractionEmail interactionEmail = interaction as IInteractionEmail;
+
+			//if(interaction.Equals(interaction_))
+			//{
+			//	MessageBox.Show("Interactions are equal");
+			//}
+			//else
+			//{
+			//	MessageBox.Show("Interactions are not equal");
+			//}
 
 			IChainOfCommand Command;
             IDictionary<string, object> parameters = new Dictionary<string, object>();
@@ -167,8 +179,6 @@ namespace Adventus.Modules.Email
 			// available are only email parts created by an agent. .eml file has to be assembled from the email parts.
 			Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("SaveAttachments");
 			parameters.Clear();
-			Model.Clear();
-			Model.Interaction = interaction;
             parameters.Add("Model", Model);
             Command.Execute(parameters);
         }

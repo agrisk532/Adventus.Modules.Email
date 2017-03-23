@@ -59,8 +59,8 @@ namespace Adventus.Modules.Email
         public SaveAttachmentsViewModel()
         {
             EmailPartsInfoStored = false;
-			SaveButtonVisibility = Visibility.Visible;
-			SendAndSaveButtonVisibility = Visibility.Hidden;
+			SaveButtonVisibility = Visibility.Collapsed;
+			SendAndSaveButtonVisibility = Visibility.Collapsed;
         }
 		
         public IInteraction Interaction
@@ -71,7 +71,7 @@ namespace Adventus.Modules.Email
 
 		public void Clear()
 		{
-			interaction = null;
+			//interaction = null;
 			EmailPartsPath.Clear();
 			EmailPartsInfoStored = false;
 		}

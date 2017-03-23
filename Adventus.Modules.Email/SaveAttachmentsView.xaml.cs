@@ -39,7 +39,7 @@ namespace Adventus.Modules.Email
         public void Create()
         {
             IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
-            Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
+            //Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
             //IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
             //if (interactionEmail == null)
             //{
@@ -53,9 +53,10 @@ namespace Adventus.Modules.Email
 
 		private void SaveAttachmentsView_InteractionViewCreated(object sender, InteractionViewEventArgs e)
 		{
-			IInteractionEmail eventInteractionEmail = e.Interaction as IInteractionEmail;
-			Model.Interaction = eventInteractionEmail;
+			//IInteractionEmail eventInteractionEmail = e.Interaction as IInteractionEmail;
+			//Model.Interaction = eventInteractionEmail;
 			//IInteractionEmail modelInteractionEmail = Model.Interaction as IInteractionEmail;
+			Model.Interaction = e.Interaction;
 
 			//if(eventInteractionEmail.EntrepriseEmailInteractionCurrent.Id		== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id ||
 			//   eventInteractionEmail.EntrepriseEmailInteractionCurrent.ParentID	== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id)

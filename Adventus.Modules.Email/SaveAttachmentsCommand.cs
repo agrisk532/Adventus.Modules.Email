@@ -76,6 +76,8 @@ namespace Adventus.Modules.Email
                 Model = parameters["Model"] as SaveAttachmentsViewModel;
                 interaction = Model.Interaction;
                 interactionEmail = interaction as IInteractionEmail;
+				//string sub = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "Null subject";
+				//MessageBox.Show(String.Format("Subject = {0}", sub));
 
                 if (interaction == null)
                 {
@@ -287,7 +289,8 @@ namespace Adventus.Modules.Email
 						sb.AppendLine(Model.EmailPartsPath[i]);
 						sb.AppendLine();
 					}
-					MessageBox.Show(sb.ToString(), "Information");
+					//MessageBox.Show(sb.ToString(), "Information");
+					Model.Clear();
 					return false;
 				}
 			}
