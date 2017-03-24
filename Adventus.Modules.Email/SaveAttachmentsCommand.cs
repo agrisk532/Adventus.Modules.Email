@@ -39,15 +39,16 @@ namespace Adventus.Modules.Email
 		public string OutputFolderName;		// for saving .eml and attachments
 		readonly IConfigurationService configurationService;
 
-		// Config server parameters for person. Email and attachment save path
+		// Config server parameters for user and application. Email and attachment save path
 		private const string CONFIG_SECTION_NAME_EMAIL_SAVE	= "custom-email-content-save";		// section name
 		private const string CONFIG_OPTION_NAME_EMAIL_SAVE_PATH = "email-content-save-path";	// name of the folder where .eml and attachments will be stored
-		// Config server parameters for person. Email save option name. It specifies what to save, email binary format, attachments or both
-		private const string CONFIG_OPTION_NAME_INBOUND_EMAIL_SAVE_OPTION = "email-content-save-options-inbound";  // values: 1)eml, 2)attachments, 3)all (eml+attachments)
-		private const string CONFIG_OPTION_NAME_OUTBOUND_EMAIL_SAVE_OPTION = "email-content-save-options-outbound"; // values: 1)eml, 2)attachments, 3)all (eml+attachments)
-		private const string CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH = "email-content-save-subject-length"; // values: 1)eml, 2)attachments, 3)all (eml+attachments)
+		// Config server parameters for user and application. Email save option name. It specifies what to save, email binary format, attachments or both
+		private const string CONFIG_OPTION_NAME_INBOUND_EMAIL_SAVE_OPTION = "email-content-save-options-inbound";  // values: eml, attachments, all (eml+attachments)
+		private const string CONFIG_OPTION_NAME_OUTBOUND_EMAIL_SAVE_OPTION = "email-content-save-options-outbound"; // values: eml, attachments, all (eml+attachments)
+		// Config server parameter for subject truncation length
+		private const string CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH = "email-content-save-subject-length";
+		private const string DEFAULT_SUBJECT_LENGTH = "25";		// default value for option CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH
 
-		private const string DEFAULT_SUBJECT_LENGTH = "25";
 		// constructor
         public SaveAttachmentsCommand(IObjectContainer container, ILogger logger)
         {
@@ -73,21 +74,20 @@ namespace Adventus.Modules.Email
             }
             else
             {
+				// interaction must be read only from the Model, where it is updated from the IInteractionsWindowController events.
                 Model = parameters["Model"] as SaveAttachmentsViewModel;
                 interaction = Model.Interaction;
                 interactionEmail = interaction as IInteractionEmail;
-				//string sub = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "Null subject";
-				//MessageBox.Show(String.Format("Subject = {0}", sub));
 
                 if (interaction == null)
                 {
-                    MessageBox.Show("Interaction is NULL");
+                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is NULL");
                     return true;	// stop execution of command chain
                 }
                 else
                 if(interactionEmail == null)
                 {
-                    MessageBox.Show("Interaction is not of IInteractionEmail type");
+                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is not of IInteractionEmail type");
                     return true;	// stop execution of command chain
                 }
                 else
@@ -133,7 +133,7 @@ namespace Adventus.Modules.Email
 						}
 						catch (Exception exception)
 						{
-							MessageBox.Show(string.Format("Exception creating folder at {0}: {1}. Using folder on Desktop.", OutputFolderName, exception.Message), "Attention");
+							MessageBox.Show(string.Format("Exception creating folder at {0}: {1}.", OutputFolderName, exception.Message), "Attention");
 							OutputFolderName = SetDesktopOutputFolder() + "\\" + SubjectTrimmed;
 						}
 					}
@@ -327,10 +327,13 @@ namespace Adventus.Modules.Email
 			Model.EmailPartsPath.RemoveAll(x => !x.EndsWith("eml"));
 		}
 
-		private static void CloseUCSConnection(UniversalContactServerProtocol ucsConnection)
+		private void CloseUCSConnection(UniversalContactServerProtocol ucsConnection)
 		{
 			if (ucsConnection.State != ChannelState.Closed && ucsConnection.State != ChannelState.Closing)
 			{
+				ucsConnection.Opened -= new EventHandler(ucsConnection_Opened);
+				ucsConnection.Error -= new EventHandler(ucsConnection_Error);
+				ucsConnection.Closed -= new EventHandler(ucsConnection_Closed);
 				ucsConnection.Close();
 				ucsConnection.Dispose();
 			}

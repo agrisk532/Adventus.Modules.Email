@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Genesyslab.Desktop.Infrastructure;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
-using Genesyslab.Enterprise.Interaction;
 using Genesyslab.Enterprise.Model.ServiceModel;
 using Genesyslab.Enterprise.Services;
 using Genesyslab.Enterprise.Model.Contact;
@@ -40,12 +38,12 @@ namespace Adventus.Modules.Email
  */
         public void Create()
         {
-            IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
+            //IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
             //Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
             //IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
             //if (interactionEmail == null)
             //{
-               // MessageBox.Show("Interaction is not of IInteractionEmail type");
+            //    MessageBox.Show("Interaction is not of IInteractionEmail type");
             //}
 
 			//container.Resolve<IInteractionManager>().InteractionEvent += 

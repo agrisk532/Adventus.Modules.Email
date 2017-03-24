@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
-using System.Threading;
 using System.Windows.Threading;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
@@ -78,13 +77,13 @@ namespace Adventus.Modules.Email
 
                 if (interaction == null)
                 {
-                    ErrorMessage("Interaction is NULL");
+                    ErrorMessage("Interaction is NULL. Cannot attach data.");
                     return true; // stop execution of the command chain
                 }
                 else
                 if (interactionEmail == null)
                 {
-                    ErrorMessage("Interaction is not of IInteractionEmail type");
+                    ErrorMessage("Interaction is not of IInteractionEmail type. Cannot attach data.");
                     return true;
                 }
                 else

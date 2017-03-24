@@ -71,7 +71,7 @@ namespace Adventus.Modules.Email
 
 		public void Clear()
 		{
-			//interaction = null;
+			//interaction = null;  // do not clear interaction here. It is used in other parts of code
 			EmailPartsPath.Clear();
 			EmailPartsInfoStored = false;
 		}

@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using Genesyslab.Desktop.Infrastructure;
 using Genesyslab.Desktop.Infrastructure.Commands;
-using Genesyslab.Desktop.Modules.Core.Model.Interactions;
-using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
-using Genesyslab.Desktop.Modules.OpenMedia.Windows.Interactions.MediaView.Email.InteractionInboundEmailView;
-using Genesyslab.Desktop.WPFCommon;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
-using Genesyslab.Desktop.Modules.Windows.Event;
 using Genesyslab.Desktop.Modules.Windows.Interactions;
 
 namespace Adventus.Modules.Email
@@ -38,7 +31,7 @@ namespace Adventus.Modules.Email
  */
         public void Create()
         {
-            IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
+            //IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
             //Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
             //IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
             //if (interactionEmail == null)
