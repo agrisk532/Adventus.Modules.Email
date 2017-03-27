@@ -357,37 +357,45 @@ namespace Adventus.Modules.Email
 		// attachments must be saved on the file system before calling this method. Use method SaveAttachments(ucsConnection, attachmentList)
 		private void AssembleAndSaveEMLBinaryContent(string messageFrom, string messageTo, string messageText, string structuredMessageText, string path)
 		{
-			MailMessage mailMessage = new MailMessage(messageFrom, messageTo);
-			mailMessage.Subject = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
-			if (structuredMessageText != null)
+			using (MailMessage mailMessage = new MailMessage(messageFrom, messageTo))
 			{
-				mailMessage.Body = structuredMessageText;
-				mailMessage.IsBodyHtml = true;
-			}
-			else
-			{
-				mailMessage.Body = messageText;
-				mailMessage.IsBodyHtml = false;
-			}
-			// Add attachments
-			foreach (string pathToAttachment in Model.EmailPartsPath)
-			{
-				mailMessage.Attachments.Add(new System.Net.Mail.Attachment(pathToAttachment));
-			}
-
-			if (mailMessage != null)
-			{
-				try
+				mailMessage.Subject = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
+				if (structuredMessageText != null)
 				{
-					mailMessage.Save(path);
-					if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
+					mailMessage.Body = structuredMessageText;
+					mailMessage.IsBodyHtml = true;
 				}
-				catch (Exception ex)
+				else
 				{
-					MessageBox.Show(string.Format("Cannot save file {0}: {1}", path, ex.ToString()), "Attention");
+					mailMessage.Body = messageText;
+					mailMessage.IsBodyHtml = false;
+				}
+				// Add attachments
+				List<System.Net.Mail.Attachment> attList = new List<System.Net.Mail.Attachment>();
+				foreach (string pathToAttachment in Model.EmailPartsPath)
+				{
+					System.Net.Mail.Attachment att = new System.Net.Mail.Attachment(pathToAttachment);
+					attList.Add(att);
+					mailMessage.Attachments.Add(att);
+				}
+	
+				if (mailMessage != null)
+				{
+					try
+					{
+						mailMessage.Save(path);
+						if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
+					}
+					catch (Exception ex)
+					{
+						MessageBox.Show(string.Format("Cannot save file {0}: {1}", path, ex.ToString()), "Attention");
+					}
+					finally
+					{
+						attList.ForEach(i => i.Dispose());
+					}
 				}
 			}
-			mailMessage.Dispose();
 		}
 
 		private void SaveEMLBinaryContent(InteractionContent interactionContent, string path)
