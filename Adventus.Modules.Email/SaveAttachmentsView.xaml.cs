@@ -4,6 +4,8 @@ using System.Windows.Controls;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.Windows.Interactions;
+using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
+using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 
 namespace Adventus.Modules.Email
 {
@@ -14,6 +16,7 @@ namespace Adventus.Modules.Email
     {
         readonly IObjectContainer container;
         public object Context { get; set; }
+		public ICase Case { get; set; }
 
         public SaveAttachmentsView(IObjectContainer container, ISaveAttachmentsViewModel model)
         {
@@ -31,7 +34,8 @@ namespace Adventus.Modules.Email
  */
         public void Create()
         {
-            //IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
+            IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
+			Case = contextDictionary["Case"] as ICase;
             //Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
             //IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
             //if (interactionEmail == null)
@@ -47,9 +51,17 @@ namespace Adventus.Modules.Email
 		private void SaveAttachmentsView_InteractionViewCreated(object sender, InteractionViewEventArgs e)
 		{
 			//IInteractionEmail eventInteractionEmail = e.Interaction as IInteractionEmail;
+			//if(eventInteractionEmail == null)
+			//{
+			//	return;		// ignore non-email type interactions in changing custom email buttons
+			//}
+			//else
+			if(e.Interaction.CaseId == Case.CaseId)
+			{
 			//Model.Interaction = eventInteractionEmail;
 			//IInteractionEmail modelInteractionEmail = Model.Interaction as IInteractionEmail;
-			Model.Interaction = e.Interaction;
+			
+				Model.Interaction = e.Interaction;
 
 			//if(eventInteractionEmail.EntrepriseEmailInteractionCurrent.Id		== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id ||
 			//   eventInteractionEmail.EntrepriseEmailInteractionCurrent.ParentID	== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id)
@@ -65,7 +77,7 @@ namespace Adventus.Modules.Email
 					Model.SaveButtonVisibility = Visibility.Visible;
 					//Model.SendAndSaveButtonVisibility = Visibility.Collapsed;
 				}
-			//}
+			}
 		}
 
 		//public void SAV_InteractionEvent(object sender, EventArgs<IInteraction> e)

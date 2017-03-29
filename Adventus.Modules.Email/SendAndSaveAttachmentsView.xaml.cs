@@ -21,6 +21,7 @@ namespace Adventus.Modules.Email
     {
         readonly IObjectContainer container;
         public object Context { get; set; }
+		public ICase Case { get; set; }
 
         public SendAndSaveAttachmentsView(IObjectContainer container, ISaveAttachmentsViewModel model)
         {
@@ -38,7 +39,8 @@ namespace Adventus.Modules.Email
  */
         public void Create()
         {
-            //IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
+            IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
+			Case = contextDictionary["Case"] as ICase;
             //Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
             //IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
             //if (interactionEmail == null)
@@ -54,6 +56,14 @@ namespace Adventus.Modules.Email
 		private void SendAndSaveAttachmentsView_InteractionViewCreated(object sender, InteractionViewEventArgs e)
 		{
 			//IInteractionEmail eventInteractionEmail = e.Interaction as IInteractionEmail;
+			//if(eventInteractionEmail == null)
+			//{
+			//	return;		// ignore non-email type interactions in changing custom email buttons
+			//}
+			//else
+			if(e.Interaction.CaseId == Case.CaseId)
+			{
+			//Model.Interaction = eventInteractionEmail;
 			//IInteractionEmail modelInteractionEmail = Model.Interaction as IInteractionEmail;
 			//Model.Interaction = eventInteractionEmail;
 			Model.Interaction = e.Interaction;
@@ -72,7 +82,7 @@ namespace Adventus.Modules.Email
 					//Model.SaveButtonVisibility = Visibility.Visible;
 					Model.SendAndSaveButtonVisibility = Visibility.Collapsed;
 				}
-			//}
+			}
 		}
 
 
