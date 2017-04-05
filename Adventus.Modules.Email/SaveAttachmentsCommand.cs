@@ -359,7 +359,9 @@ namespace Adventus.Modules.Email
 		{
 			using (MailMessage mailMessage = new MailMessage(messageFrom, messageTo))
 			{
-				mailMessage.Subject = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
+				// assumption - the email subject is (probably) decoded and stored in database in utf8 charset
+				string s = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
+				mailMessage.Subject = @"=?utf-8?Q?" + Encoder.EncodeQuotedPrintable(s) + @"?=";
 				if (structuredMessageText != null)
 				{
 					mailMessage.Body = structuredMessageText;

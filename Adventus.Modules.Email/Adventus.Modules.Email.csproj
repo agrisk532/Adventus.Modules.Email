@@ -106,6 +106,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Encoder.cs" />
     <Compile Include="ISendAndSaveAttachmentsView.cs" />
     <Compile Include="ISaveAttachmentsView.cs" />
     <Compile Include="ISaveAttachmentsViewModel.cs" />
