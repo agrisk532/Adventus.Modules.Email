@@ -366,8 +366,11 @@ namespace Adventus.Modules.Email
 				//mailMessage.Subject = @"=?utf-8?Q?" + Encoder.EncodeQuotedPrintable(s) + @"?=";
 
 				// Base64 encoding
-				var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(s);
-				mailMessage.Subject = @"=?utf-8?B?" + System.Convert.ToBase64String(plainTextBytes) + @"?=";
+				//var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(s);
+				//var subject = @"=?utf-8?B?" + System.Convert.ToBase64String(plainTextBytes) + @"?=";
+				//mailMessage.Subject = subject;
+				mailMessage.Subject = s;
+				mailMessage.SubjectEncoding = System.Text.Encoding.UTF8;
 
 				if (structuredMessageText != null)
 				{
