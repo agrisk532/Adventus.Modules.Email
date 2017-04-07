@@ -21,6 +21,7 @@ using System.Reflection;
 using Genesyslab.Platform.Commons.Collections;
 using Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects;
 using Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.Queries;
+using MimeKit;
 
 namespace Adventus.Modules.Email
 {
@@ -357,57 +358,100 @@ namespace Adventus.Modules.Email
 		// attachments must be saved on the file system before calling this method. Use method SaveAttachments(ucsConnection, attachmentList)
 		private void AssembleAndSaveEMLBinaryContent(string messageFrom, string messageTo, string messageText, string structuredMessageText, string path)
 		{
-			using (MailMessage mailMessage = new MailMessage(messageFrom, messageTo))
+			var message = new MimeMessage ();
+			message.From.Add (new MailboxAddress (messageFrom));
+			message.To.Add (new MailboxAddress (messageTo));
+			//message.Subject = "";
+			HeaderList l = message.Headers;
+			string s = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
+			//l["Subject"] = @"=?utf-8?Q?" + Encoder.EncodeQuotedPrintable(s) + @"?=";
+			// Base64 encoding
+			//var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(s);
+			//var subject = @"=?utf-8?B?" + System.Convert.ToBase64String(plainTextBytes) + @"?=";
+			l["Subject"] = s;
+
+			var builder = new BodyBuilder ();
+
+            // Set the plain-text version of the message text
+            builder.TextBody = messageText;
+            // Set the html version of the message text
+            builder.HtmlBody = structuredMessageText;
+
+			foreach (string pathToAttachment in Model.EmailPartsPath)
 			{
-				// assumption - the email subject is (probably) decoded and stored in database in utf8 charset
-				string s = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
-
-				// Quoted printable encoding
-				//mailMessage.Subject = @"=?utf-8?Q?" + Encoder.EncodeQuotedPrintable(s) + @"?=";
-
-				// Base64 encoding
-				//var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(s);
-				//var subject = @"=?utf-8?B?" + System.Convert.ToBase64String(plainTextBytes) + @"?=";
-				//mailMessage.Subject = subject;
-				mailMessage.Subject = s;
-				mailMessage.SubjectEncoding = System.Text.Encoding.UTF8;
-
-				if (structuredMessageText != null)
+				try
 				{
-					mailMessage.Body = structuredMessageText;
-					mailMessage.IsBodyHtml = true;
+					builder.Attachments.Add(pathToAttachment);
 				}
-				else
+				catch(Exception ex)
 				{
-					mailMessage.Body = messageText;
-					mailMessage.IsBodyHtml = false;
-				}
-				// Add attachments
-				List<System.Net.Mail.Attachment> attList = new List<System.Net.Mail.Attachment>();
-				foreach (string pathToAttachment in Model.EmailPartsPath)
-				{
-					System.Net.Mail.Attachment att = new System.Net.Mail.Attachment(pathToAttachment);
-					attList.Add(att);
-					mailMessage.Attachments.Add(att);
-				}
-	
-				if (mailMessage != null)
-				{
-					try
-					{
-						mailMessage.Save(path);
-						if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
-					}
-					catch (Exception ex)
-					{
-						MessageBox.Show(string.Format("Cannot save file {0}: {1}", path, ex.ToString()), "Attention");
-					}
-					finally
-					{
-						attList.ForEach(i => i.Dispose());
-					}
+					MessageBox.Show(string.Format("Cannot attach file {0}: {1}", pathToAttachment, ex.ToString()), "Attention");
 				}
 			}
+			
+            // Now we just need to set the message body and we're done
+            message.Body = builder.ToMessageBody();
+			try
+			{
+				message.WriteTo(path);
+				if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
+			}
+			catch(Exception ex)
+			{
+				MessageBox.Show(string.Format("Cannot save file {0}: {1}", path, ex.ToString()), "Attention");
+			}
+
+			//using (MailMessage mailMessage = new MailMessage(messageFrom, messageTo))
+			//{
+			//	// assumption - the email subject is (probably) decoded and stored in database in utf8 charset
+			//	string s = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
+
+			//	// Quoted printable encoding
+			//	//mailMessage.Subject = @"=?utf-8?Q?" + Encoder.EncodeQuotedPrintable(s) + @"?=";
+
+			//	// Base64 encoding
+			//	//var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(s);
+			//	//var subject = @"=?utf-8?B?" + System.Convert.ToBase64String(plainTextBytes) + @"?=";
+			//	//mailMessage.Subject = subject;
+			//	mailMessage.Subject = s;
+			//	mailMessage.SubjectEncoding = System.Text.Encoding.UTF8;
+
+			//	if (structuredMessageText != null)
+			//	{
+			//		mailMessage.Body = structuredMessageText;
+			//		mailMessage.IsBodyHtml = true;
+			//	}
+			//	else
+			//	{
+			//		mailMessage.Body = messageText;
+			//		mailMessage.IsBodyHtml = false;
+			//	}
+			//	// Add attachments
+			//	List<System.Net.Mail.Attachment> attList = new List<System.Net.Mail.Attachment>();
+			//	foreach (string pathToAttachment in Model.EmailPartsPath)
+			//	{
+			//		System.Net.Mail.Attachment att = new System.Net.Mail.Attachment(pathToAttachment);
+			//		attList.Add(att);
+			//		mailMessage.Attachments.Add(att);
+			//	}
+	
+			//	if (mailMessage != null)
+			//	{
+			//		try
+			//		{
+			//			mailMessage.Save(path);
+			//			if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
+			//		}
+			//		catch (Exception ex)
+			//		{
+			//			MessageBox.Show(string.Format("Cannot save file {0}: {1}", path, ex.ToString()), "Attention");
+			//		}
+			//		finally
+			//		{
+			//			attList.ForEach(i => i.Dispose());
+			//		}
+			//	}
+			//}
 		}
 
 		private void SaveEMLBinaryContent(InteractionContent interactionContent, string path)
@@ -665,57 +709,57 @@ namespace Adventus.Modules.Email
     }
 
 	// this is for .net version 4.5
-	public static class MailMessageExt
-	{
-	    public static void Save(this MailMessage Message, string FileName)
-	    {
-	        Assembly assembly = typeof(SmtpClient).Assembly;
-	        Type _mailWriterType = 
-	          assembly.GetType("System.Net.Mail.MailWriter");
+	//public static class MailMessageExt
+	//{
+	//    public static void Save(this MailMessage Message, string FileName)
+	//    {
+	//        Assembly assembly = typeof(SmtpClient).Assembly;
+	//        Type _mailWriterType = 
+	//          assembly.GetType("System.Net.Mail.MailWriter");
 	
-	        using (FileStream _fileStream = 
-	               new FileStream(FileName, FileMode.Create))
-	        {
-	            // Get reflection info for MailWriter contructor
-	            ConstructorInfo _mailWriterContructor =
-	                _mailWriterType.GetConstructor(
-	                    BindingFlags.Instance | BindingFlags.NonPublic,
-	                    null,
-	                    new Type[] { typeof(Stream) }, 
-	                    null);
+	//        using (FileStream _fileStream = 
+	//               new FileStream(FileName, FileMode.Create))
+	//        {
+	//            // Get reflection info for MailWriter contructor
+	//            ConstructorInfo _mailWriterContructor =
+	//                _mailWriterType.GetConstructor(
+	//                    BindingFlags.Instance | BindingFlags.NonPublic,
+	//                    null,
+	//                    new Type[] { typeof(Stream) }, 
+	//                    null);
 	
-	            // Construct MailWriter object with our FileStream
-	            object _mailWriter = 
-	              _mailWriterContructor.Invoke(new object[] { _fileStream });
+	//            // Construct MailWriter object with our FileStream
+	//            object _mailWriter = 
+	//              _mailWriterContructor.Invoke(new object[] { _fileStream });
 	
-	            // Get reflection info for Send() method on MailMessage
-	            MethodInfo _sendMethod =
-	                typeof(MailMessage).GetMethod(
-	                    "Send",
-	                    BindingFlags.Instance | BindingFlags.NonPublic);
+	//            // Get reflection info for Send() method on MailMessage
+	//            MethodInfo _sendMethod =
+	//                typeof(MailMessage).GetMethod(
+	//                    "Send",
+	//                    BindingFlags.Instance | BindingFlags.NonPublic);
 	
-	            // Call method passing in MailWriter
-				_sendMethod.Invoke(
-					Message,
-					BindingFlags.Instance | BindingFlags.NonPublic,
-					null,
-					new object[] { _mailWriter, true, true },
-					null);
+	//            // Call method passing in MailWriter
+	//			_sendMethod.Invoke(
+	//				Message,
+	//				BindingFlags.Instance | BindingFlags.NonPublic,
+	//				null,
+	//				new object[] { _mailWriter, true, true },
+	//				null);
 	
-	            // Finally get reflection info for Close() method on our MailWriter
-	            MethodInfo _closeMethod =
-	                _mailWriter.GetType().GetMethod(
-	                    "Close",
-	                    BindingFlags.Instance | BindingFlags.NonPublic);
+	//            // Finally get reflection info for Close() method on our MailWriter
+	//            MethodInfo _closeMethod =
+	//                _mailWriter.GetType().GetMethod(
+	//                    "Close",
+	//                    BindingFlags.Instance | BindingFlags.NonPublic);
 	
-	            // Call close method
-	            _closeMethod.Invoke(
-	                _mailWriter,
-	                BindingFlags.Instance | BindingFlags.NonPublic,
-	                null,
-	                new object[] { },
-	                null);
-	        }
-	    }
-	}
+	//            // Call close method
+	//            _closeMethod.Invoke(
+	//                _mailWriter,
+	//                BindingFlags.Instance | BindingFlags.NonPublic,
+	//                null,
+	//                new object[] { },
+	//                null);
+	//        }
+	//    }
+	//}
 }
