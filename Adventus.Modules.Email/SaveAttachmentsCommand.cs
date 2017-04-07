@@ -16,8 +16,6 @@ using Genesyslab.Platform.Contacts.Protocols.ContactServer;
 using Genesyslab.Platform.Contacts.Protocols.ContactServer.Requests;
 using Genesyslab.Platform.Contacts.Protocols.ContactServer.Events;
 using Genesyslab.Desktop.Modules.Core.SDK.Configurations;
-using System.Net.Mail;
-using System.Reflection;
 using Genesyslab.Platform.Commons.Collections;
 using Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects;
 using Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.Queries;
