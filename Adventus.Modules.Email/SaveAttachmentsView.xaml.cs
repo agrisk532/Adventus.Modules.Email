@@ -4,15 +4,14 @@ using System.Windows.Controls;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.Windows.Interactions;
-using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 
 namespace Adventus.Modules.Email
 {
-/** \class SaveAttachmentsView
- *  \brief Interaction logic for SaveAttachmentsView.xaml
- */
-    public partial class SaveAttachmentsView : UserControl, ISaveAttachmentsView
+	/** \class SaveAttachmentsView
+	 *  \brief Interaction logic for SaveAttachmentsView.xaml
+	 */
+	public partial class SaveAttachmentsView : UserControl, ISaveAttachmentsView
     {
         readonly IObjectContainer container;
         public object Context { get; set; }
