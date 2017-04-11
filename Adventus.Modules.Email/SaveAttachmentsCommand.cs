@@ -490,8 +490,8 @@ namespace Adventus.Modules.Email
 					{
 						documentName = attachment.DocumentId + "_" + documentName;
 					}
-
-					attachmentNames.Add(documentName); // for adding to message body
+					documentName = RemoveSpecialChars(documentName);
+					//attachmentNames.Add(documentName); // for adding to message body
 					DownloadAndSaveAttachment(ucsConnection, attachment.DocumentId, documentName);  // Saves Attachment on disk. Document path also saved in Model.EmailPartsPath
 				}
 			}
