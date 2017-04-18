@@ -640,11 +640,13 @@ namespace Adventus.Modules.Email
 		 */
 		private string RemoveSpecialChars(string src)
 		{
+			src = src.Replace("\t", "  ");
 			char[] chars = {'<', '>', ':', '\"', '\'', '/','\\', '|', '?', '*'}; // these chars are not allowed in filenames and path names
+			char[] invalidPathChars = Path.GetInvalidPathChars();
 			var sb = new StringBuilder();
 			for (int i = 0; i < src.Length; i++)
 			{
-		        if (!chars.Contains(src[i]))
+		        if (!chars.Contains(src[i]) && !invalidPathChars.Contains(src[i]))
 					sb.Append(src[i]);
 			}
 			string res = sb.ToString();
