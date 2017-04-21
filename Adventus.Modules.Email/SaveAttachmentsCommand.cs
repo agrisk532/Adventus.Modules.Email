@@ -513,6 +513,21 @@ namespace Adventus.Modules.Email
 
 			while(true)
 			{
+// user level configuration option
+				try
+				{
+					Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = interaction.Agent.ConfPerson;
+					Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
+					Genesyslab.Platform.Commons.Collections.KeyValueCollection sect = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc[section];
+					opt = (string)sect[option];
+					opt = Environment.ExpandEnvironmentVariables(opt);
+					break;
+				}
+		        catch (Exception ex)
+		        {
+					// fall through to the application options
+		        }
+
 // application level configuration option
 				try
 				{
@@ -524,21 +539,6 @@ namespace Adventus.Modules.Email
 	
 					KeyValueCollection kvc = app.Options;
 					KeyValueCollection sect = (KeyValueCollection) kvc[section];
-					opt = (string)sect[option];
-					opt = Environment.ExpandEnvironmentVariables(opt);
-					break;
-				}
-		        catch (Exception ex)
-		        {
-					// fall through to the user options
-		        }
-	
-// user level configuration option
-				try
-				{
-					Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = interaction.Agent.ConfPerson;
-					Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
-					Genesyslab.Platform.Commons.Collections.KeyValueCollection sect = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc[section];
 					opt = (string)sect[option];
 					opt = Environment.ExpandEnvironmentVariables(opt);
 					break;
