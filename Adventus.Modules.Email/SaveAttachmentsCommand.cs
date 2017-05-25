@@ -20,6 +20,8 @@ using Genesyslab.Platform.Commons.Collections;
 using Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects;
 using Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.Queries;
 using MimeKit;
+using Genesyslab.Enterprise.Model.ServiceModel;
+using Genesyslab.Enterprise.Services;
 
 namespace Adventus.Modules.Email
 {
@@ -37,6 +39,14 @@ namespace Adventus.Modules.Email
 		public int subjectLength;
 		public string OutputFolderName;		// for saving .eml and attachments
 		readonly IConfigurationService configurationService;
+		
+		// for calls from ContactDirectory History tab
+		public Genesyslab.Enterprise.Model.Interaction.IEmailInteraction enterpriseEmailInteraction;
+		public bool isCalledFromHistory;
+
+		public Genesyslab.Enterprise.Services.IContactService service;
+		public Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService service2;
+		public Genesyslab.Enterprise.Model.Channel.IClientChannel channel;
 
 		// Config server parameters for user and application. Email and attachment save path
 		private const string CONFIG_SECTION_NAME_EMAIL_SAVE	= "custom-email-content-save";		// section name
@@ -56,6 +66,10 @@ namespace Adventus.Modules.Email
 			this.log = logger;
 			log.Info("SaveAttachmentsCommand() entered");
 			OutputFolderName = String.Empty;
+			isCalledFromHistory = false; // called from active online interaction
+			service = container.Resolve<IEnterpriseServiceProvider>().Resolve<IContactService>("contactService");
+			service2 = container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService>();
+			channel = container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Protocol.IChannelManager>().Register(service2.UCSApp, "IW@ContactService");
         }
 
 /** \brief Command implementation
@@ -74,23 +88,47 @@ namespace Adventus.Modules.Email
             else
             {
 				// interaction must be read only from the Model, where it is updated from the IInteractionsWindowController events.
-                Model = parameters["Model"] as SaveAttachmentsViewModel;
-                interaction = Model.Interaction;
-                interactionEmail = interaction as IInteractionEmail;
-
-                if (interaction == null)
-                {
-                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is NULL");
-                    return true;	// stop execution of command chain
-                }
-                else
-                if(interactionEmail == null)
-                {
-                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is not of IInteractionEmail type");
-                    return true;	// stop execution of command chain
-                }
-                else
+				// if parameters["Model"] == null, then this command is called from the WDE ContactDirectory History page
+				try
 				{
+	                Model = parameters["Model"] as SaveAttachmentsViewModel;
+	                interaction = Model.Interaction;
+	                interactionEmail = interaction as IInteractionEmail;
+					enterpriseEmailInteraction = interactionEmail.EntrepriseEmailInteractionCurrent;
+
+	                if (interaction == null)
+	                {
+	                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is NULL");
+	                    return true;	// stop execution of command chain
+	                }
+	                else
+	                if(interactionEmail == null)
+	                {
+	                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is not of IInteractionEmail type");
+	                    return true;	// stop execution of command chain
+	                }
+				}
+				catch(KeyNotFoundException e)
+				{
+					object value;
+					if (parameters.TryGetValue("CommandParameter", out value))
+					{
+						isCalledFromHistory = true;
+						enterpriseEmailInteraction = service.GetInteractionContent(channel, (string)value) as Genesyslab.Enterprise.Model.Interaction.IEmailInteraction;
+						Model = container.Resolve<ISaveAttachmentsViewModel>() as SaveAttachmentsViewModel;
+					} 
+					else 
+					{
+	                    MessageBox.Show("SaveAttachmentsCommand(): Command parameter error");
+						return true;	// stop execution of command chain
+					}
+				}
+				catch(Exception e)
+				{
+					MessageBox.Show("SaveAttachmentsCommand(): type error");
+					return true;
+				}
+
 					// get subjectLength
 					subjectLength = GetSubjectLength();
 
@@ -177,7 +215,7 @@ namespace Adventus.Modules.Email
 					}
 
 					RequestGetInteractionContent request = new RequestGetInteractionContent();
-					request.InteractionId = interaction.EntrepriseInteractionCurrent.Id;
+					request.InteractionId = enterpriseEmailInteraction.Id;
 					request.IncludeBinaryContent = true;
 					request.IncludeAttachments = true;
 
@@ -192,11 +230,12 @@ namespace Adventus.Modules.Email
 
 					// create and save message
 
-					string messageFrom = (interaction.GetAttachedData("FromAddress") ?? "").ToString();
+					//string messageFrom = (interaction.GetAttachedData("FromAddress") ?? "").ToString();
+					string messageFrom = enterpriseEmailInteraction.From;
 					string messageTo;
 					try
 					{
-						messageTo = interactionEmail.EntrepriseEmailInteractionCurrent.To[0] ?? "";
+						messageTo = enterpriseEmailInteraction.To[0] ?? "";
 					}
 					catch (Exception e)
 					{
@@ -210,9 +249,9 @@ namespace Adventus.Modules.Email
 						CloseUCSConnection(ucsConnection);
 						return false;	// continue execution of the command chain
 					}
-					string messageDate = interactionEmail.EntrepriseEmailInteractionCurrent.StartDate.ToString("dd.MM.yyyy HH:mm");
-					string messageText = interactionEmail.EntrepriseEmailInteractionCurrent.MessageText;    /**< without html formatting */
-					string structuredMessageText = interactionEmail.EntrepriseEmailInteractionCurrent.StructuredText;   /**< with html formatting */
+					string messageDate = enterpriseEmailInteraction.StartDate.ToString("dd.MM.yyyy HH:mm");
+					string messageText = enterpriseEmailInteraction.MessageText;    /**< without html formatting */
+					string structuredMessageText = enterpriseEmailInteraction.StructuredText;   /**< with html formatting */
 					string emlFilePath = Path.Combine(OutputFolderName, SubjectTrimmed + ".eml");
 
 					AttachmentList attachmentList = eventGetIxnContent.Attachments;
@@ -220,7 +259,8 @@ namespace Adventus.Modules.Email
 
 					// read options from config server
 					string opt = String.Empty;
-					if (interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In)
+					if (enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In ||
+						enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Unknown)
 					{
 						opt = GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_INBOUND_EMAIL_SAVE_OPTION);
 						if (opt == "eml")
@@ -240,7 +280,7 @@ namespace Adventus.Modules.Email
 						}
 					}
 					else
-					if (interactionEmail.EntrepriseEmailInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
+					if (enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
 					{
 						opt = GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_OUTBOUND_EMAIL_SAVE_OPTION);
 						if (opt == "eml")
@@ -274,12 +314,13 @@ namespace Adventus.Modules.Email
 					// show info in a messagebox
 					Model.EmailPartsInfoStored = true;
 					StringBuilder sb = new StringBuilder();
-					sb.Append("Interaction ID: " + interaction.EntrepriseInteractionCurrent.Id);
+					sb.Append("Interaction ID: " + enterpriseEmailInteraction.Id);
 					sb.AppendLine(Environment.NewLine);
-					sb.Append("From: " + interaction.GetAttachedData("FromAddress"));
+					//sb.Append("From: " + interaction.GetAttachedData("FromAddress"));
+					sb.Append("From: " + enterpriseEmailInteraction.From);
 					sb.AppendLine(Environment.NewLine);
 					//sb.Append("Subject: " + interaction.GetAttachedData("Subject"));
-					sb.Append("Subject: " + interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "");
+					sb.Append("Subject: " + enterpriseEmailInteraction.Subject ?? "");
 					sb.AppendLine(Environment.NewLine);
 					sb.Append("Email parts: ");
 					sb.AppendLine(Environment.NewLine);
@@ -291,7 +332,6 @@ namespace Adventus.Modules.Email
 					//MessageBox.Show(sb.ToString(), "Information");
 					Model.Clear();
 					return false;
-				}
 			}
         }
 
@@ -361,7 +401,7 @@ namespace Adventus.Modules.Email
 			message.To.Add (new MailboxAddress (messageTo));
 			//message.Subject = "";
 			HeaderList l = message.Headers;
-			string s = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
+			string s = enterpriseEmailInteraction.Subject ?? "";
 			//l["Subject"] = @"=?utf-8?Q?" + Encoder.EncodeQuotedPrintable(s) + @"?=";
 			// Base64 encoding
 			//var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(s);
@@ -500,7 +540,7 @@ namespace Adventus.Modules.Email
 		// Mangle Subject
 		private string GetSubjectTrimmed()
 		{
-			string subj = RemoveSpecialChars(interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "Empty subject");
+			string subj = RemoveSpecialChars(enterpriseEmailInteraction.Subject ?? "Empty subject");
 			if (subj.Length > subjectLength) subj = subj.Substring(0, subjectLength);
 			return subj;
 		}
