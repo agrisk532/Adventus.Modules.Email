@@ -71,9 +71,18 @@ CONCLUSION: Before sending reply email, if interactionEmail.EntrepriseEmailInter
 Genesyslab.Desktop.Modules.OpenMedia.dll
 namespace Genesyslab.Desktop.Modules.OpenMedia.Windows.Interactions.MediaView
 internal class InteractionInboundEmailControlExtension : InteractionControlExtension, IInteractionControlExtension
-public IList<RequestedAction> RequestActions(string capacity, ActionTarget target, object context)
+internal class InteractionOutboundEmailControlExtension : InteractionControlExtension, IInteractionControlExtension
+
+NB: search for string "Windows.EmailView.MenuItemInteractionActionPrint". A group of 3 statements is in 2 places in the code.
+
+
+The first is for
+case ActionTarget.InteractionActionFromWorkbin:
+do not change anything there. Search for another group of the statements and add the following code after the if(){ try/catch } block of the "Windows.EmailView.MenuItemInteractionActionPrint".
+(works only for default and high contrast themes)
+
 case ActionTarget.InteractionActionFromContactHistory:
-!!! add at the end of case statement this code:
+!!! add at the end of case statement this code: 
 		try
 		{
 			IWInteraction iwinteraction = contextDictionary.TryGetValue("interaction") as IWInteraction;
@@ -91,13 +100,13 @@ case ActionTarget.InteractionActionFromContactHistory:
 					this.SaveAttachments(iwinteraction);
 				}
 			});
-			return list;
 		}
 		catch (Exception ex3)
 		{
 			this.log.Error("Adding Attachments action exception: " + ex3.ToString());
 			return list;
 		}
+		return list;
 
 !!! add this function to the class:
 

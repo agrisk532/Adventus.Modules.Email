@@ -157,7 +157,7 @@
 copy "$(ProjectDir)\Adventus.Modules.Email.module-config" "$(TargetDir)"</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>copy "C:\Users\agrisk\Desktop\Genesyslab.Desktop.Modules.OpenMedia.dll" "$(TargetDir)"</PostBuildEvent>
+    <PostBuildEvent>REM copy "C:\Users\agrisk\Desktop\Genesyslab.Desktop.Modules.OpenMedia.dll" "$(TargetDir)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
