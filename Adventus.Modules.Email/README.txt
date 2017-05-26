@@ -67,3 +67,56 @@ CONCLUSION: Before sending reply email, if interactionEmail.EntrepriseEmailInter
 -		EntrepriseEmailInteractionCurrent	{01VJ4TJRJ72M403R}	Genesyslab.Enterprise.Model.Interaction.IEmailInteraction {Genesyslab.Enterprise.Interaction.EmailInteraction}
 		InteractionSubtype	"OutboundReply"	string
 
+!!! To handle interaction content saving from the contact directory history tab apply the following changes:
+Genesyslab.Desktop.Modules.OpenMedia.dll
+namespace Genesyslab.Desktop.Modules.OpenMedia.Windows.Interactions.MediaView
+internal class InteractionInboundEmailControlExtension : InteractionControlExtension, IInteractionControlExtension
+public IList<RequestedAction> RequestActions(string capacity, ActionTarget target, object context)
+case ActionTarget.InteractionActionFromContactHistory:
+!!! add at the end of case statement this code:
+		try
+		{
+			IWInteraction iwinteraction = contextDictionary.TryGetValue("interaction") as IWInteraction;
+			list.Add(new RequestedAction
+			{
+				Type = text4,
+				NameId = "Common.Images.Interaction.Email.Save",
+				TooltipId = "Common.Images.Interaction.Email.Save",
+				ImageId = "Common.Images.Interaction.Email.Save",
+				Order = 50 + list.Count,
+				IsPossible = flag,
+				IsDefault = true,
+				Action = delegate
+				{
+					this.SaveAttachments(iwinteraction);
+				}
+			});
+			return list;
+		}
+		catch (Exception ex3)
+		{
+			this.log.Error("Adding Attachments action exception: " + ex3.ToString());
+			return list;
+		}
+
+!!! add this function to the class:
+
+private void SaveAttachments(object interacion)
+{
+	string value = "";
+	if (interacion is IWInteraction)
+	{
+		value = (interacion as IWInteraction).Id;
+	}
+	else if (interacion is WorkbinInteraction)
+	{
+		value = (interacion as WorkbinInteraction).Id;
+	}
+	Utils.ExecuteAsynchronousCommand(this.commandManager.GetChainOfCommandByName("SaveAttachments"), new Dictionary<string, object>
+	{
+		{
+			"CommandParameter",
+			value
+		}
+	}, null);
+}
