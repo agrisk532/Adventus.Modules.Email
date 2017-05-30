@@ -34,7 +34,7 @@ namespace Adventus.Modules.Email
         public void Create()
         {
             IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
-			Case = contextDictionary["Case"] as ICase;
+			//Case = contextDictionary["Case"] as ICase;
             //Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
             //IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
             //if (interactionEmail == null)
@@ -44,7 +44,7 @@ namespace Adventus.Modules.Email
 
 			//container.Resolve<IInteractionManager>().InteractionEvent += 
    //                      new System.EventHandler<EventArgs<IInteraction>> (SAV_InteractionEvent);
-			container.Resolve<IInteractionsWindowController>().InteractionViewCreated += SaveAttachmentsView_InteractionViewCreated;
+			//container.Resolve<IInteractionsWindowController>().InteractionViewCreated += SaveAttachmentsView_InteractionViewCreated;
 		}
 
 		private void SaveAttachmentsView_InteractionViewCreated(object sender, InteractionViewEventArgs e)

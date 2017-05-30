@@ -2,8 +2,11 @@
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Infrastructure.ViewManager;
+using Genesyslab.Desktop.Modules.Windows.Event;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 using System.Collections.Generic;
+using System;
+using System.Windows;
 
 namespace Adventus.Modules.Email
 {
@@ -15,17 +18,21 @@ namespace Adventus.Modules.Email
         readonly IObjectContainer container;
         readonly IViewManager viewManager;
         readonly ICommandManager commandManager;
+		readonly IViewEventManager eventManager;
+		private bool isButtonRegisteredInRegion;
 
 /** \brief Initializes a new instance of the SaveAttachmentsModule class.
  *  \param container The container
  *  \param viewManager The view manager
  *  \param commandManager The command manager
  */
-        public Module(IObjectContainer container, IViewManager viewManager, ICommandManager commandManager)
+        public Module(IObjectContainer container, IViewManager viewManager, ICommandManager commandManager, IViewEventManager eventManager)
         {
             this.container = container;
             this.viewManager = viewManager;
             this.commandManager = commandManager;
+			this.eventManager = eventManager;
+			this.isButtonRegisteredInRegion = false;
         }
 
 /** \brief Initializes the module
@@ -37,22 +44,23 @@ namespace Adventus.Modules.Email
 			container.RegisterType<ISendAndSaveAttachmentsView, SendAndSaveAttachmentsView>();
             container.RegisterType<ISaveAttachmentsViewModel, SaveAttachmentsViewModel>();
 
-            // Put the "SaveAttachments" view in the region "BundleCustomButtonRegion" if Condition is true
-            viewManager.ViewsByRegionName["BundleCustomButtonRegion"].Add(new ViewActivator()
+			// Put the "SaveAttachments" view in the region "BundleCustomButtonRegion" if Condition is true
+
+			viewManager.ViewsByRegionName["BundleCustomButtonRegion"].Add(new ViewActivator()
 				{
 					ViewType = typeof(ISaveAttachmentsView), ViewName = "SaveAttachments", ActivateView = true, Condition = CheckCondition
 				}
-            );
+			);
 
-            viewManager.ViewsByRegionName["BundleCustomButtonRegion"].Add(new ViewActivator()
+			viewManager.ViewsByRegionName["BundleCustomButtonRegion"].Add(new ViewActivator()
 				{ 
 					ViewType = typeof(ISendAndSaveAttachmentsView), ViewName = "SendAndSaveAttachments", ActivateView = true, Condition = CheckCondition
 				}
             );
 
+			// Register commands
 
-            // register commands
-            commandManager.CreateChainOfCommandByName("SaveAttachments");
+			commandManager.CreateChainOfCommandByName("SaveAttachments");
             commandManager.AddCommandToChainOfCommand("SaveAttachments", new List<CommandActivator>()
                 {
                     new CommandActivator() { CommandType = typeof(SaveAttachmentsCommand), Name = "SaveAttachments"}
@@ -65,7 +73,41 @@ namespace Adventus.Modules.Email
                 }
             );
 
+			//viewManager.ViewsByRegionName["ContactHistoryErrorRegion"].Add(new ViewActivator()
+			//{
+			//	ViewType = typeof(ISaveAttachmentsView),
+			//	ViewName = "SaveAttachments",
+			//	ActivateView = true,
+			//	Condition = CheckCondition2
+			//}
+			//);
+
+			eventManager.Subscribe(MyEventHandler);
         }
+
+		public void MyEventHandler(object eventObject)
+		{
+			GenericEvent ge = eventObject as GenericEvent;
+			if(!isButtonRegisteredInRegion && ge.Target == "ContactHistory")
+			{
+				try
+				{
+					viewManager.ViewsByRegionName["ContactHistoryErrorRegion"].Add(new ViewActivator()
+					{
+						ViewType = typeof(ISaveAttachmentsView),
+						ViewName = "SaveAttachments",
+						ActivateView = true,
+						Condition = CheckCondition2
+					}
+					);
+					isButtonRegisteredInRegion = true;
+				}
+				catch(Exception e)
+				{
+					isButtonRegisteredInRegion = false;
+				}
+			}
+		}
 
 /** \brief View display condition.
  *  executed every time before displaying the view
@@ -88,6 +130,11 @@ namespace Adventus.Modules.Email
                 }
             }    
             return false;
+        }
+
+        public bool CheckCondition2(ref object context)
+        {
+            return true;
         }
     }
 }

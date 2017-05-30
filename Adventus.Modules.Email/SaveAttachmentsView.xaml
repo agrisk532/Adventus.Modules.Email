@@ -8,10 +8,10 @@
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
-        <commonControls:InteractionToolBarButton Name="buttonSave" ToolTip="Kataloog" Click="SaveAttachmentsButton_Click" Visibility="{Binding Path=SaveButtonVisibility}">
+
             <StackPanel Orientation="Horizontal">
-                <Image Width="24" Height="24" Source="Kataloog.png"/>
+                <Image Width="16" Height="16" Source="save.png"/>
             </StackPanel>
-        </commonControls:InteractionToolBarButton>
+
     </Grid>
 </UserControl>

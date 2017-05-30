@@ -89,6 +89,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.OpenMedia.Protocols.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Practices.Composite, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Microsoft.Practices.Composite.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Practices.Unity">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Microsoft.Practices.Unity.dll</HintPath>
     </Reference>
@@ -146,6 +150,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="README.txt" />
+    <Resource Include="save.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Kataloog.png" />
