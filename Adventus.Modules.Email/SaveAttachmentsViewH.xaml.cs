@@ -5,28 +5,27 @@ using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.Windows.Interactions;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
-using Genesyslab.Desktop.Infrastructure;
 
 namespace Adventus.Modules.Email
 {
 	/** \class SaveAttachmentsView
 	 *  \brief Interaction logic for SaveAttachmentsView.xaml
 	 */
-	public partial class SaveAttachmentsView : UserControl, ISaveAttachmentsView
+	public partial class SaveAttachmentsViewH : UserControl, ISaveAttachmentsViewH
     {
         readonly IObjectContainer container;
         public object Context { get; set; }
 		public ICase Case { get; set; }
 
-        public SaveAttachmentsView(IObjectContainer container, ISaveAttachmentsViewModel model)
+        public SaveAttachmentsViewH(IObjectContainer container, ISaveAttachmentsViewModelH model)
         {
             this.container = container;
             this.Model = model;
             InitializeComponent();
         }
-        public ISaveAttachmentsViewModel Model
+        public ISaveAttachmentsViewModelH Model
         {
-            get { return this.DataContext as ISaveAttachmentsViewModel; }
+            get { return this.DataContext as ISaveAttachmentsViewModelH; }
             set { this.DataContext = value; }
         }
 
@@ -35,17 +34,17 @@ namespace Adventus.Modules.Email
         public void Create()
         {
             IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
-			Case = contextDictionary["Case"] as ICase;
-			//Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
-			//IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
-			//if (interactionEmail == null)
-			//{
-			//    MessageBox.Show("Interaction is not of IInteractionEmail type");
-			//}
+			//Case = contextDictionary["Case"] as ICase;
+            //Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
+            //IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
+            //if (interactionEmail == null)
+            //{
+            //    MessageBox.Show("Interaction is not of IInteractionEmail type");
+            //}
 
-			container.Resolve<IInteractionManager>().InteractionEvent +=
-						 new System.EventHandler<EventArgs<IInteraction>>(SAV_InteractionEvent);
-			container.Resolve<IInteractionsWindowController>().InteractionViewCreated += SaveAttachmentsView_InteractionViewCreated;
+			//container.Resolve<IInteractionManager>().InteractionEvent += 
+   //                      new System.EventHandler<EventArgs<IInteraction>> (SAV_InteractionEvent);
+			//container.Resolve<IInteractionsWindowController>().InteractionViewCreated += SaveAttachmentsView_InteractionViewCreated;
 		}
 
 		private void SaveAttachmentsView_InteractionViewCreated(object sender, InteractionViewEventArgs e)
@@ -80,24 +79,24 @@ namespace Adventus.Modules.Email
 			}
 		}
 
-		public void SAV_InteractionEvent(object sender, EventArgs<IInteraction> e)
-		{
-			//Add a reference to: Genesyslab.Enterprise.Services.Multimedia.dll 
-			//and Genesyslab.Enterprise.Model.dll object flag;
-			IInteraction interaction = e.Value;
-			if (interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
-			{
-				Model.SaveButtonVisibility = Visibility.Collapsed;
-			}
-			else
-			{
-				Model.SaveButtonVisibility = Visibility.Visible;
-			}
-		}
+		//public void SAV_InteractionEvent(object sender, EventArgs<IInteraction> e)
+		//{
+		//      //Add a reference to: Genesyslab.Enterprise.Services.Multimedia.dll 
+		//     //and Genesyslab.Enterprise.Model.dll object flag;
+		//      IInteraction interaction = e.Value;
+		//	  if(interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
+		//	  {
+		//			Model.SaveButtonVisibility = Visibility.Collapsed;
+		//	  }
+		//	  else
+		//	  {
+		//	  		Model.SaveButtonVisibility = Visibility.Visible;
+		//	  }
+		//}
 
-		/** \brief Executed once, at the view object destruction
-		 */
-		public void Destroy()
+/** \brief Executed once, at the view object destruction
+ */
+        public void Destroy()
         {
 			//container.Resolve<IInteractionManager>().InteractionEvent -= 
 			//	new System.EventHandler<EventArgs<IInteraction>> (SAV_InteractionEvent);

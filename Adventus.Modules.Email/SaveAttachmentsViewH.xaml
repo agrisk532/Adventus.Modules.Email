@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Adventus.Modules.Email.SaveAttachmentsView"
+﻿<UserControl x:Class="Adventus.Modules.Email.SaveAttachmentsViewH"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -8,10 +8,10 @@
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
-        <commonControls:InteractionToolBarButton Name="buttonSave" ToolTip="Kataloog" Click="SaveAttachmentsButton_Click" Visibility="{Binding Path=SaveButtonVisibility}">
+
             <StackPanel Orientation="Horizontal">
-                <Image Width="24" Height="24" Source="Kataloog.png"/>
+                <Image Width="16" Height="16" Source="save.png"/>
             </StackPanel>
-        </commonControls:InteractionToolBarButton>
+
     </Grid>
 </UserControl>

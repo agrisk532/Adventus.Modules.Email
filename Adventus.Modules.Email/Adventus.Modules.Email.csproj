@@ -116,14 +116,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Encoder.cs" />
+    <Compile Include="ISaveAttachmentsViewH.cs" />
+    <Compile Include="ISaveAttachmentsViewModelH.cs" />
     <Compile Include="ISendAndSaveAttachmentsView.cs" />
     <Compile Include="ISaveAttachmentsView.cs" />
     <Compile Include="ISaveAttachmentsViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SaveAttachmentsCommand.cs" />
+    <Compile Include="SaveAttachmentsViewH.xaml.cs">
+      <DependentUpon>SaveAttachmentsViewH.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SaveAttachmentsViewModel.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="SaveAttachmentsView.xaml.cs" />
+    <Compile Include="SaveAttachmentsViewModelH.cs" />
     <Compile Include="SendEmailAttachDataCommand.cs" />
     <Compile Include="SendAndSaveAttachmentsView.xaml.cs">
       <DependentUpon>SendAndSaveAttachmentsView.xaml</DependentUpon>
@@ -137,6 +143,10 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="SaveAttachmentsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="SaveAttachmentsViewH.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

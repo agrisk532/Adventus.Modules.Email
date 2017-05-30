@@ -43,6 +43,8 @@ namespace Adventus.Modules.Email
             container.RegisterType<ISaveAttachmentsView, SaveAttachmentsView>();
 			container.RegisterType<ISendAndSaveAttachmentsView, SendAndSaveAttachmentsView>();
             container.RegisterType<ISaveAttachmentsViewModel, SaveAttachmentsViewModel>();
+			container.RegisterType<ISaveAttachmentsViewH, SaveAttachmentsViewH>();
+			container.RegisterType<ISaveAttachmentsViewModelH, SaveAttachmentsViewModelH>();
 
 			// Put the "SaveAttachments" view in the region "BundleCustomButtonRegion" if Condition is true
 
@@ -73,15 +75,6 @@ namespace Adventus.Modules.Email
                 }
             );
 
-			//viewManager.ViewsByRegionName["ContactHistoryErrorRegion"].Add(new ViewActivator()
-			//{
-			//	ViewType = typeof(ISaveAttachmentsView),
-			//	ViewName = "SaveAttachments",
-			//	ActivateView = true,
-			//	Condition = CheckCondition2
-			//}
-			//);
-
 			eventManager.Subscribe(MyEventHandler);
         }
 
@@ -94,7 +87,7 @@ namespace Adventus.Modules.Email
 				{
 					viewManager.ViewsByRegionName["ContactHistoryErrorRegion"].Add(new ViewActivator()
 					{
-						ViewType = typeof(ISaveAttachmentsView),
+						ViewType = typeof(ISaveAttachmentsViewH),
 						ViewName = "SaveAttachments",
 						ActivateView = true,
 						Condition = CheckCondition2
