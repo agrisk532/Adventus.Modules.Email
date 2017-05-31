@@ -105,7 +105,7 @@ namespace Adventus.Modules.Email
 
 /** \brief Event handler
  */
-        private void SaveAttachmentsButton_Click(object sender, RoutedEventArgs e)
+        private void SaveAttachmentsButtonH_Click(object sender, RoutedEventArgs e)
         {
             IChainOfCommand Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("SaveAttachments");
             IDictionary<string, object> parameters = new Dictionary<string, object>();
