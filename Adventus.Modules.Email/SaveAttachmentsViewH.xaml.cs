@@ -3,8 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
-using Genesyslab.Desktop.Modules.Windows.Interactions;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
+using Genesyslab.Desktop.Modules.Windows.Event;
 
 namespace Adventus.Modules.Email
 {
@@ -33,52 +33,23 @@ namespace Adventus.Modules.Email
  */
         public void Create()
         {
-            IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
-			//Case = contextDictionary["Case"] as ICase;
-            //Model.Interaction = contextDictionary.TryGetValue("Interaction") as IInteraction;
-            //IInteractionEmail interactionEmail = Model.Interaction as IInteractionEmail;
-            //if (interactionEmail == null)
-            //{
-            //    MessageBox.Show("Interaction is not of IInteractionEmail type");
-            //}
-
-			//container.Resolve<IInteractionManager>().InteractionEvent += 
-   //                      new System.EventHandler<EventArgs<IInteraction>> (SAV_InteractionEvent);
-			//container.Resolve<IInteractionsWindowController>().InteractionViewCreated += SaveAttachmentsView_InteractionViewCreated;
+			container.Resolve<IViewEventManager>().Subscribe(MyEventHandler2);
 		}
 
-		private void SaveAttachmentsView_InteractionViewCreated(object sender, InteractionViewEventArgs e)
+		public void MyEventHandler2(object eventObject)
 		{
-			//IInteractionEmail eventInteractionEmail = e.Interaction as IInteractionEmail;
-			//if(eventInteractionEmail == null)
-			//{
-			//	return;		// ignore non-email type interactions in changing custom email buttons
-			//}
-			//else
-			if(e.Interaction.CaseId == Case.CaseId)
+			GenericEvent ge = eventObject as GenericEvent;
+			if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == "ContactMain" )
 			{
-			//Model.Interaction = eventInteractionEmail;
-			//IInteractionEmail modelInteractionEmail = Model.Interaction as IInteractionEmail;
-			
-				Model.Interaction = e.Interaction;
-
-			//if(eventInteractionEmail.EntrepriseEmailInteractionCurrent.Id		== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id ||
-			//   eventInteractionEmail.EntrepriseEmailInteractionCurrent.ParentID	== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id)
-			//{
-				if(e.Interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
+				Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent ic =
+				ge.Action[0].Parameters[0] as Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent;
+				Genesyslab.Platform.Contacts.Protocols.ContactServer.InteractionAttributes ia = ic.InteractionAttributes;
+				if(ia.MediaTypeId == "email")
 				{
-					Model.SaveButtonVisibility = Visibility.Collapsed;
-					//Model.SendAndSaveButtonVisibility = Visibility.Visible;
-				}
-				else
-				if(e.Interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In)
-				{
-					Model.SaveButtonVisibility = Visibility.Visible;
-					//Model.SendAndSaveButtonVisibility = Visibility.Collapsed;
+					Model.SelectedInteractionId = ia.Id;	// selected interaction id
 				}
 			}
 		}
-
 		//public void SAV_InteractionEvent(object sender, EventArgs<IInteraction> e)
 		//{
 		//      //Add a reference to: Genesyslab.Enterprise.Services.Multimedia.dll 
@@ -98,9 +69,7 @@ namespace Adventus.Modules.Email
  */
         public void Destroy()
         {
-			//container.Resolve<IInteractionManager>().InteractionEvent -= 
-			//	new System.EventHandler<EventArgs<IInteraction>> (SAV_InteractionEvent);
-			container.Resolve<IInteractionsWindowController>().InteractionViewCreated -= SaveAttachmentsView_InteractionViewCreated;
+			container.Resolve<IViewEventManager>().Unsubscribe(MyEventHandler2);
         }
 
 /** \brief Event handler
@@ -109,7 +78,7 @@ namespace Adventus.Modules.Email
         {
             IChainOfCommand Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("SaveAttachments");
             IDictionary<string, object> parameters = new Dictionary<string, object>();
-            parameters.Add("Model", Model);
+            parameters.Add("CommandParameter", Model.SelectedInteractionId);
             Command.Execute(parameters);
         }
     }

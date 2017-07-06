@@ -91,7 +91,7 @@ namespace Adventus.Modules.Email
 				// if parameters["Model"] == null, then this command is called from the WDE ContactDirectory History page
 				try
 				{
-	                Model = parameters["Model"] as SaveAttachmentsViewModel;
+					Model = parameters["Model"] as SaveAttachmentsViewModel;
 	                interaction = Model.Interaction;
 	                interactionEmail = interaction as IInteractionEmail;
 					enterpriseEmailInteraction = interactionEmail.EntrepriseEmailInteractionCurrent;

@@ -33,6 +33,10 @@
     <Reference Include="Genesyslab.Desktop.Infrastructure">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Desktop.Infrastructure.dll</HintPath>
     </Reference>
+    <Reference Include="Genesyslab.Desktop.Modules.Contacts, Version=8.5.114.10, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Desktop.Modules.Contacts.dll</HintPath>
+    </Reference>
     <Reference Include="Genesyslab.Desktop.Modules.Core">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Desktop.Modules.Core.dll</HintPath>
     </Reference>
@@ -96,8 +100,8 @@
     <Reference Include="Microsoft.Practices.Unity">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Microsoft.Practices.Unity.dll</HintPath>
     </Reference>
-    <Reference Include="MimeKitLite, Version=1.12.0.0, Culture=neutral, PublicKeyToken=bede1c8a46c66814, processorArchitecture=MSIL">
-      <HintPath>..\packages\MimeKitLite.1.12.0\lib\net45\MimeKitLite.dll</HintPath>
+    <Reference Include="MimeKitLite, Version=1.16.0.0, Culture=neutral, PublicKeyToken=bede1c8a46c66814, processorArchitecture=MSIL">
+      <HintPath>..\packages\MimeKitLite.1.16.2\lib\net45\MimeKitLite.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="PresentationCore" />
@@ -115,7 +119,6 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Encoder.cs" />
     <Compile Include="ISaveAttachmentsViewH.cs" />
     <Compile Include="ISaveAttachmentsViewModelH.cs" />
     <Compile Include="ISendAndSaveAttachmentsView.cs" />
@@ -129,6 +132,7 @@
     <Compile Include="SaveAttachmentsViewModel.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="SaveAttachmentsView.xaml.cs" />
+    <Compile Include="SaveAttachmentsViewModelBase.cs" />
     <Compile Include="SaveAttachmentsViewModelH.cs" />
     <Compile Include="SendEmailAttachDataCommand.cs" />
     <Compile Include="SendAndSaveAttachmentsView.xaml.cs">

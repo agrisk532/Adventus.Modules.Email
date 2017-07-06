@@ -4,7 +4,7 @@
              xmlns:commonControls="clr-namespace:Genesyslab.Desktop.WPFCommon.Controls;assembly=Genesyslab.Desktop.WPFCommon"
              xmlns:my="clr-namespace:Adventus.Modules.Email">
              <StackPanel Orientation="Horizontal">
-                 <Button Name="SaveFromHistoryButton"  Height="16" Width="16" Click="SaveAttachmentsButtonH_Click">
+        <Button Name="SaveFromHistoryButton"  Height="16" Width="16" Click="SaveAttachmentsButtonH_Click"  Visibility="{Binding Path=SaveButtonVisibilityH}">
                      <Button.Template>
                          <ControlTemplate>
                              <Image Source="save.png"/>
