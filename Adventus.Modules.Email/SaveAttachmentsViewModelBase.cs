@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel;
+using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 
 namespace Adventus.Modules.Email
 {
@@ -15,6 +16,8 @@ namespace Adventus.Modules.Email
             get { return emailPartsPath; }
             set {}
         }
+
+		public IInteraction Interaction { get; internal set; }
 
 		public void Clear()
 		{

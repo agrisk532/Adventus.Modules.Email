@@ -33,7 +33,7 @@ namespace Adventus.Modules.Email
         readonly IObjectContainer container;
         readonly ILogger log;
         public string Name { get; set; }
-        public SaveAttachmentsViewModel Model { get; set; }
+        public SaveAttachmentsViewModelBase Model { get; set; }
         public IInteraction interaction { get; set; }
         public IInteractionEmail interactionEmail { get; set; }
 		public int subjectLength;
@@ -115,7 +115,7 @@ namespace Adventus.Modules.Email
 					{
 						isCalledFromHistory = true;
 						enterpriseEmailInteraction = service.GetInteractionContent(channel, (string)value) as Genesyslab.Enterprise.Model.Interaction.IEmailInteraction;
-						Model = container.Resolve<ISaveAttachmentsViewModel>() as SaveAttachmentsViewModel;
+						Model = (SaveAttachmentsViewModelBase)container.Resolve<ISaveAttachmentsViewModelH>();
 					} 
 					else 
 					{
