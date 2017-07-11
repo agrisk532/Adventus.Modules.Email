@@ -17,8 +17,6 @@ namespace Adventus.Modules.Email
             set {}
         }
 
-		public IInteraction Interaction { get; internal set; }
-
 		public void Clear()
 		{
 			//interaction = null;  // do not clear interaction here. It is used in other parts of code
