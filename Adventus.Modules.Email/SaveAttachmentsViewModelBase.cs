@@ -4,9 +4,10 @@ using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 
 namespace Adventus.Modules.Email
 {
-	public class SaveAttachmentsViewModelBase : INotifyPropertyChanged
+	public abstract class SaveAttachmentsViewModelBase : INotifyPropertyChanged
 	{
-	    public List<string> emailPartsPath = new List<string>();   /**< full path on disk of email body and each attachment */
+	    
+		public List<string> emailPartsPath;   /**< full path on disk of email body and each attachment */
         public bool EmailPartsInfoStored { get; set; }  /**< set this to true after storing message body and all attachment paths */
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -16,6 +17,12 @@ namespace Adventus.Modules.Email
             get { return emailPartsPath; }
             set {}
         }
+
+		public SaveAttachmentsViewModelBase()
+		{
+			emailPartsPath = new List<string>();
+			EmailPartsInfoStored = false;
+		}
 
 		public void Clear()
 		{

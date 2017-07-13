@@ -33,12 +33,12 @@ namespace Adventus.Modules.Email
         readonly IObjectContainer container;
         readonly ILogger log;
         public string Name { get; set; }
-        public SaveAttachmentsViewModelBase Model { get; set; }
         public IInteraction interaction { get; set; }
         public IInteractionEmail interactionEmail { get; set; }
 		public int subjectLength;
 		public string OutputFolderName;		// for saving .eml and attachments
 		readonly IConfigurationService configurationService;
+		public SaveAttachmentsViewModelBase Model;
 		
 		// for calls from ContactDirectory History tab
 		public Genesyslab.Enterprise.Model.Interaction.IEmailInteraction enterpriseEmailInteraction;
@@ -87,37 +87,43 @@ namespace Adventus.Modules.Email
             }
             else
             {
-				// interaction must be read only from the Model, where it is updated from the IInteractionsWindowController events.
-				// if parameters["Model"] == null, then this command is called from the WDE ContactDirectory History page
 				try
 				{
-					Model = parameters["Model"] as SaveAttachmentsViewModel;
-	                interaction = Model.Interaction;
-	                interactionEmail = interaction as IInteractionEmail;
-					enterpriseEmailInteraction = interactionEmail.EntrepriseEmailInteractionCurrent;
-
-	                if (interaction == null)
-	                {
-	                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is NULL");
-	                    return true;	// stop execution of command chain
-	                }
-	                else
-	                if(interactionEmail == null)
-	                {
-	                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is not of IInteractionEmail type");
-	                    return true;	// stop execution of command chain
-	                }
-				}
-				catch(KeyNotFoundException e)
-				{
-					object value;
-					if (parameters.TryGetValue("CommandParameter", out value))
+					if(parameters.ContainsKey("Model"))	// ISaveAttachmentsViewModel used (active interaction)
 					{
-						isCalledFromHistory = true;
-						enterpriseEmailInteraction = service.GetInteractionContent(channel, (string)value) as Genesyslab.Enterprise.Model.Interaction.IEmailInteraction;
-						Model = (SaveAttachmentsViewModelBase)container.Resolve<ISaveAttachmentsViewModelH>();
-					} 
-					else 
+						SaveAttachmentsViewModel m = parameters["Model"] as SaveAttachmentsViewModel;
+						if(m != null)
+						{
+			                interaction = m.Interaction;
+			                if (interaction == null)
+			                {
+			                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is NULL");
+			                    return true;	// stop execution of command chain
+			                }
+
+			                interactionEmail = interaction as IInteractionEmail;
+			                if(interactionEmail == null)
+			                {
+			                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is not of IInteractionEmail type");
+			                    return true;	// stop execution of command chain
+			                }
+
+							enterpriseEmailInteraction = interactionEmail.EntrepriseEmailInteractionCurrent;
+							Model = m as SaveAttachmentsViewModelBase;
+						}
+					}
+					else
+					if(parameters.ContainsKey("CommandParameter"))	// ISaveAttachmentsViewModelH used (interaction from history)
+					{
+						object value;
+						if (parameters.TryGetValue("CommandParameter", out value))
+						{
+							isCalledFromHistory = true;
+							enterpriseEmailInteraction = service.GetInteractionContent(channel, (string)value) as Genesyslab.Enterprise.Model.Interaction.IEmailInteraction;
+							Model = (SaveAttachmentsViewModelBase)container.Resolve<ISaveAttachmentsViewModelH>();
+						} 
+					}
+					else
 					{
 	                    MessageBox.Show("SaveAttachmentsCommand(): Command parameter error");
 						return true;	// stop execution of command chain
