@@ -92,6 +92,8 @@ namespace Adventus.Modules.Email
 					if(parameters.ContainsKey("Model"))	// ISaveAttachmentsViewModel used (active interaction)
 					{
 						SaveAttachmentsViewModel m = parameters["Model"] as SaveAttachmentsViewModel;
+						SaveAttachmentsViewModelH mH = parameters["Model"] as SaveAttachmentsViewModelH;
+
 						if(m != null)
 						{
 			                interaction = m.Interaction;
@@ -109,24 +111,25 @@ namespace Adventus.Modules.Email
 			                }
 
 							enterpriseEmailInteraction = interactionEmail.EntrepriseEmailInteractionCurrent;
-							Model = m as SaveAttachmentsViewModelBase;
+							Model = m;
+						}
+						else
+						if(mH != null)
+						{
+							isCalledFromHistory = true;
+							enterpriseEmailInteraction = service.GetInteractionContent(channel, mH.SelectedInteractionId) as Genesyslab.Enterprise.Model.Interaction.IEmailInteraction;
+							Model = mH;
+						}
+						else
+						{
+		                    MessageBox.Show("SaveAttachmentsCommand(): Command parameter error");
+							return true;	// stop execution of command chain
 						}
 					}
 					else
-					if(parameters.ContainsKey("CommandParameter"))	// ISaveAttachmentsViewModelH used (interaction from history)
 					{
-						object value;
-						if (parameters.TryGetValue("CommandParameter", out value))
-						{
-							isCalledFromHistory = true;
-							enterpriseEmailInteraction = service.GetInteractionContent(channel, (string)value) as Genesyslab.Enterprise.Model.Interaction.IEmailInteraction;
-							Model = (SaveAttachmentsViewModelBase)container.Resolve<ISaveAttachmentsViewModelH>();
-						} 
-					}
-					else
-					{
-	                    MessageBox.Show("SaveAttachmentsCommand(): Command parameter error");
-						return true;	// stop execution of command chain
+						MessageBox.Show("SaveAttachmentsCommand(): Command parameter error");
+						return true;
 					}
 				}
 				catch(Exception e)

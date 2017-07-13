@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 using Genesyslab.Desktop.Modules.Windows.Event;
+using System.Windows.Threading;
 
 namespace Adventus.Modules.Email
 {
@@ -38,17 +40,28 @@ namespace Adventus.Modules.Email
 
 		public void MyEventHandler2(object eventObject)
 		{
-			GenericEvent ge = eventObject as GenericEvent;
-			if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == "ContactMain" )
+			// To go to the main thread
+			this.Dispatcher.Invoke(() =>
 			{
-				Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent ic =
-				ge.Action[0].Parameters[0] as Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent;
-				Genesyslab.Platform.Contacts.Protocols.ContactServer.InteractionAttributes ia = ic.InteractionAttributes;
-				if(ia.MediaTypeId == "email")
+				try
 				{
-					Model.SelectedInteractionId = ia.Id;	// selected interaction id
+					GenericEvent ge = eventObject as GenericEvent;
+					if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == "ContactMain" )
+					{
+						Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent ic =
+						ge.Action[0].Parameters[0] as Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent;
+						Genesyslab.Platform.Contacts.Protocols.ContactServer.InteractionAttributes ia = ic.InteractionAttributes;
+						if(ia.MediaTypeId == "email")
+						{
+							Model.SelectedInteractionId = ia.Id;	// selected interaction id
+						}
+					}
 				}
-			}
+				catch(Exception e)
+				{
+	
+				}
+			});
 		}
 		//public void SAV_InteractionEvent(object sender, EventArgs<IInteraction> e)
 		//{
@@ -78,8 +91,10 @@ namespace Adventus.Modules.Email
         {
             IChainOfCommand Command = container.Resolve<ICommandManager>().GetChainOfCommandByName("SaveAttachments");
             IDictionary<string, object> parameters = new Dictionary<string, object>();
-            parameters.Add("CommandParameter", Model.SelectedInteractionId);
+            parameters.Add("Model", Model);
             Command.Execute(parameters);
         }
+
+		delegate bool ExecuteDelegate(IDictionary<string, object> parameters, IProgressUpdater progressUpdater);
     }
 }
