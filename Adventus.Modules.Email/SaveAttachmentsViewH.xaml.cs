@@ -54,7 +54,17 @@ namespace Adventus.Modules.Email
 						if(ia.MediaTypeId == "email")
 						{
 							Model.SelectedInteractionId = ia.Id;	// selected interaction id
+							Model.SaveButtonVisibilityH = Visibility.Visible;
 						}
+						else
+						{
+							Model.SaveButtonVisibilityH = Visibility.Hidden;
+						}
+
+					}
+					else
+					{
+						Model.SaveButtonVisibilityH = Visibility.Hidden;
 					}
 				}
 				catch(Exception e)
@@ -63,20 +73,6 @@ namespace Adventus.Modules.Email
 				}
 			});
 		}
-		//public void SAV_InteractionEvent(object sender, EventArgs<IInteraction> e)
-		//{
-		//      //Add a reference to: Genesyslab.Enterprise.Services.Multimedia.dll 
-		//     //and Genesyslab.Enterprise.Model.dll object flag;
-		//      IInteraction interaction = e.Value;
-		//	  if(interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
-		//	  {
-		//			Model.SaveButtonVisibility = Visibility.Collapsed;
-		//	  }
-		//	  else
-		//	  {
-		//	  		Model.SaveButtonVisibility = Visibility.Visible;
-		//	  }
-		//}
 
 /** \brief Executed once, at the view object destruction
  */
