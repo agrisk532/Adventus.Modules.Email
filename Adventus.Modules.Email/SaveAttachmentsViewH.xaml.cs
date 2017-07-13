@@ -46,6 +46,9 @@ namespace Adventus.Modules.Email
 				try
 				{
 					GenericEvent ge = eventObject as GenericEvent;
+					if(ge.Target != "ContactHistory")
+						return;
+
 					if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == "ContactMain" )
 					{
 						Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent ic =
