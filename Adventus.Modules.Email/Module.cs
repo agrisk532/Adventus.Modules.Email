@@ -88,7 +88,7 @@ namespace Adventus.Modules.Email
 					viewManager.ViewsByRegionName["ContactHistoryErrorRegion"].Add(new ViewActivator()
 					{
 						ViewType = typeof(ISaveAttachmentsViewH),
-						ViewName = "SaveAttachments",
+						ViewName = "SaveAttachmentsH",
 						ActivateView = true,
 						Condition = CheckCondition2
 					}

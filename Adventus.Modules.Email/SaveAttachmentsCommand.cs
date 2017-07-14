@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Linq;
 using System.Windows;
 using System.Windows.Threading;
+using System.Collections.Generic;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 using Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email;
-using System.IO;
-using System.Text;
-using System.Linq;
 using Genesyslab.Platform.Commons.Protocols;
 using Genesyslab.Platform.Commons.Logging;
 using Genesyslab.Platform.Contacts.Protocols;
@@ -19,9 +19,10 @@ using Genesyslab.Desktop.Modules.Core.SDK.Configurations;
 using Genesyslab.Platform.Commons.Collections;
 using Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects;
 using Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.Queries;
-using MimeKit;
 using Genesyslab.Enterprise.Model.ServiceModel;
 using Genesyslab.Enterprise.Services;
+using Genesyslab.Desktop.Modules.Core.Model.Agents;
+using MimeKit;
 
 namespace Adventus.Modules.Email
 {
@@ -32,16 +33,14 @@ namespace Adventus.Modules.Email
     {
         readonly IObjectContainer container;
         readonly ILogger log;
-        public string Name { get; set; }
-        public IInteraction interaction { get; set; }
-        public IInteractionEmail interactionEmail { get; set; }
+        public string Name { get; set; }  // to comply with IElementOfCommand
 		public int subjectLength;
 		public string OutputFolderName;		// for saving .eml and attachments
 		readonly IConfigurationService configurationService;
 		public SaveAttachmentsViewModelBase Model;
+		public Genesyslab.Enterprise.Model.Interaction.IEmailInteraction enterpriseEmailInteraction;
 		
 		// for calls from ContactDirectory History tab
-		public Genesyslab.Enterprise.Model.Interaction.IEmailInteraction enterpriseEmailInteraction;
 		public bool isCalledFromHistory;
 
 		public Genesyslab.Enterprise.Services.IContactService service;
@@ -89,21 +88,21 @@ namespace Adventus.Modules.Email
             {
 				try
 				{
-					if(parameters.ContainsKey("Model"))	// ISaveAttachmentsViewModel used (active interaction)
+					if(parameters.ContainsKey("Model"))	
 					{
 						SaveAttachmentsViewModel m = parameters["Model"] as SaveAttachmentsViewModel;
 						SaveAttachmentsViewModelH mH = parameters["Model"] as SaveAttachmentsViewModelH;
 
-						if(m != null)
+						if(m != null)	// ISaveAttachmentsViewModel used (active interaction)
 						{
-			                interaction = m.Interaction;
+			                IInteraction interaction = m.Interaction;
 			                if (interaction == null)
 			                {
 			                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is NULL");
 			                    return true;	// stop execution of command chain
 			                }
 
-			                interactionEmail = interaction as IInteractionEmail;
+			                IInteractionEmail interactionEmail = interaction as IInteractionEmail;
 			                if(interactionEmail == null)
 			                {
 			                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is not of IInteractionEmail type");
@@ -112,17 +111,18 @@ namespace Adventus.Modules.Email
 
 							enterpriseEmailInteraction = interactionEmail.EntrepriseEmailInteractionCurrent;
 							Model = m;
+							isCalledFromHistory = false;
 						}
 						else
-						if(mH != null)
+						if(mH != null)	// ISaveAttachmentsViewModelH used (interaction from history)
 						{
-							isCalledFromHistory = true;
 							enterpriseEmailInteraction = service.GetInteractionContent(channel, mH.SelectedInteractionId) as Genesyslab.Enterprise.Model.Interaction.IEmailInteraction;
 							Model = mH;
+							isCalledFromHistory = true;
 						}
 						else
 						{
-		                    MessageBox.Show("SaveAttachmentsCommand(): Command parameter error");
+		                    MessageBox.Show("SaveAttachmentsCommand(): Invalid view model type");
 							return true;	// stop execution of command chain
 						}
 					}
@@ -134,7 +134,7 @@ namespace Adventus.Modules.Email
 				}
 				catch(Exception e)
 				{
-					MessageBox.Show("SaveAttachmentsCommand(): type error");
+					MessageBox.Show("SaveAttachmentsCommand(): Type error");
 					return true;
 				}
 
@@ -358,6 +358,7 @@ namespace Adventus.Modules.Email
 
 		private void DeleteAttachments()
 		{
+			// what about attachment filenames ending with .eml ?
 			foreach (string p in Model.EmailPartsPath)
 			{
 				try
@@ -372,7 +373,7 @@ namespace Adventus.Modules.Email
 					MessageBox.Show(string.Format("Cannot delete file {0}: {1}", p, ex.ToString()), "Attention");
 				}
 			}
-			Model.EmailPartsPath.RemoveAll(x => !x.EndsWith("eml"));
+			Model.EmailPartsPath.RemoveAll(x => !x.EndsWith("eml"));  
 		}
 
 		private void CloseUCSConnection(UniversalContactServerProtocol ucsConnection)
@@ -567,7 +568,7 @@ namespace Adventus.Modules.Email
 				{
 					try
 					{
-						Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = interaction.Agent.ConfPerson;
+						Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = container.Resolve<IAgent>().ConfPerson;  // <--- TEST THIS
 						Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
 						Genesyslab.Platform.Commons.Collections.KeyValueCollection sect = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc[section];
 						opt = (string)sect[option];
@@ -577,6 +578,7 @@ namespace Adventus.Modules.Email
 			        catch (Exception ex)
 			        {
 						// fall through to the application options
+						MessageBox.Show(string.Format("User level configuration option {0} not defined. Trying to read application level option.", option));
 			        }
 				}
 
@@ -598,11 +600,13 @@ namespace Adventus.Modules.Email
 				catch (Exception e)
 				{
 					opt = null;
+					MessageBox.Show(string.Format("Exception reading application level configuration option {0}", option));
 				}
 	
 				if(String.IsNullOrEmpty(opt))
 				{
 					opt = null;
+					MessageBox.Show(string.Format("Configuration option {0} not defined", option));
 				}
 				break;
 			}
@@ -620,11 +624,13 @@ namespace Adventus.Modules.Email
 			catch (Exception e)
 			{
 				defaultDirectory = SetDesktopOutputFolder();
+				MessageBox.Show(string.Format("Output folder configuration option not defined. Using a Desktop folder."));
 			}
 
 			if(String.IsNullOrEmpty(defaultDirectory))
 			{
 				defaultDirectory = SetDesktopOutputFolder();
+				MessageBox.Show(string.Format("Output folder configuration option not defined. Using a folder on Desktop."));
 			}
 
 			return string.Format(@"{0}\{1}", defaultDirectory, s);

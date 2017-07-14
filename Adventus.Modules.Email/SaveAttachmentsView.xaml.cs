@@ -99,8 +99,8 @@ namespace Adventus.Modules.Email
 		 */
 		public void Destroy()
         {
-			//container.Resolve<IInteractionManager>().InteractionEvent -= 
-			//	new System.EventHandler<EventArgs<IInteraction>> (SAV_InteractionEvent);
+			container.Resolve<IInteractionManager>().InteractionEvent -= 
+				new System.EventHandler<EventArgs<IInteraction>> (SAV_InteractionEvent);
 			container.Resolve<IInteractionsWindowController>().InteractionViewCreated -= SaveAttachmentsView_InteractionViewCreated;
         }
 

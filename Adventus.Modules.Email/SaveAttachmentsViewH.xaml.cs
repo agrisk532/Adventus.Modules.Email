@@ -72,7 +72,7 @@ namespace Adventus.Modules.Email
 				}
 				catch(Exception e)
 				{
-	
+					MessageBox.Show(string.Format("Exception at processing event {0}", e.Message));
 				}
 			});
 		}
@@ -94,6 +94,6 @@ namespace Adventus.Modules.Email
             Command.Execute(parameters);
         }
 
-		delegate bool ExecuteDelegate(IDictionary<string, object> parameters, IProgressUpdater progressUpdater);
+		//delegate bool ExecuteDelegate(IDictionary<string, object> parameters, IProgressUpdater progressUpdater);
     }
 }
