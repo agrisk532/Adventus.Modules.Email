@@ -43,8 +43,8 @@ namespace Adventus.Modules.Email
 			//    MessageBox.Show("Interaction is not of IInteractionEmail type");
 			//}
 
-			container.Resolve<IInteractionManager>().InteractionEvent +=
-						 new System.EventHandler<EventArgs<IInteraction>>(SAV_InteractionEvent);
+			//container.Resolve<IInteractionManager>().InteractionEvent +=
+				//		 new System.EventHandler<EventArgs<IInteraction>>(SAV_InteractionEvent);
 			container.Resolve<IInteractionsWindowController>().InteractionViewCreated += SaveAttachmentsView_InteractionViewCreated;
 		}
 
@@ -80,27 +80,27 @@ namespace Adventus.Modules.Email
 			}
 		}
 
-		public void SAV_InteractionEvent(object sender, EventArgs<IInteraction> e)
-		{
-			//Add a reference to: Genesyslab.Enterprise.Services.Multimedia.dll 
-			//and Genesyslab.Enterprise.Model.dll object flag;
-			IInteraction interaction = e.Value;
-			if (interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
-			{
-				Model.SaveButtonVisibility = Visibility.Collapsed;
-			}
-			else
-			{
-				Model.SaveButtonVisibility = Visibility.Visible;
-			}
-		}
+		//public void SAV_InteractionEvent(object sender, EventArgs<IInteraction> e)
+		//{
+		//	//Add a reference to: Genesyslab.Enterprise.Services.Multimedia.dll 
+		//	//and Genesyslab.Enterprise.Model.dll object flag;
+		//	IInteraction interaction = e.Value;
+		//	if (interaction.EntrepriseInteractionCurrent.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
+		//	{
+		//		Model.SaveButtonVisibility = Visibility.Collapsed;
+		//	}
+		//	else
+		//	{
+		//		Model.SaveButtonVisibility = Visibility.Visible;
+		//	}
+		//}
 
 		/** \brief Executed once, at the view object destruction
 		 */
 		public void Destroy()
         {
-			container.Resolve<IInteractionManager>().InteractionEvent -= 
-				new System.EventHandler<EventArgs<IInteraction>> (SAV_InteractionEvent);
+			//container.Resolve<IInteractionManager>().InteractionEvent -= 
+				//new System.EventHandler<EventArgs<IInteraction>> (SAV_InteractionEvent);
 			container.Resolve<IInteractionsWindowController>().InteractionViewCreated -= SaveAttachmentsView_InteractionViewCreated;
         }
 

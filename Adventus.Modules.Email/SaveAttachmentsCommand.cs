@@ -564,23 +564,20 @@ namespace Adventus.Modules.Email
 			while(true)
 			{
 // user level configuration option
-				if(!isCalledFromHistory)
+				try
 				{
-					try
-					{
-						Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = container.Resolve<IAgent>().ConfPerson;  // <--- TEST THIS
-						Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
-						Genesyslab.Platform.Commons.Collections.KeyValueCollection sect = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc[section];
-						opt = (string)sect[option];
-						opt = Environment.ExpandEnvironmentVariables(opt);
-						break;
-					}
-			        catch (Exception ex)
-			        {
-						// fall through to the application options
-						MessageBox.Show(string.Format("User level configuration option {0} not defined. Trying to read application level option.", option));
-			        }
+					Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = container.Resolve<IAgent>().ConfPerson;  // <--- TEST THIS
+					Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
+					Genesyslab.Platform.Commons.Collections.KeyValueCollection sect = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc[section];
+					opt = (string)sect[option];
+					opt = Environment.ExpandEnvironmentVariables(opt);
+					break;
 				}
+		        catch (Exception ex)
+		        {
+					// fall through to the application options
+					MessageBox.Show(string.Format("User level configuration option {0} not defined. Trying to read application level option.", option));
+		        }
 
 // application level configuration option
 				try

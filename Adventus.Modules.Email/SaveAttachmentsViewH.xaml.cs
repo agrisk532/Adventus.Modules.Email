@@ -46,10 +46,14 @@ namespace Adventus.Modules.Email
 				try
 				{
 					GenericEvent ge = eventObject as GenericEvent;
+					if(ge == null)
+						return;
+					else
 					if(ge.Target != "ContactHistory")
 						return;
-
+					else
 					if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == "ContactMain" )
+					//if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory")	// allow saving email from History tab of any parent page, not only contact directory
 					{
 						Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent ic =
 						ge.Action[0].Parameters[0] as Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent;
