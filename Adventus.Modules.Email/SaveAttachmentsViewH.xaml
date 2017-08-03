@@ -3,13 +3,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:commonControls="clr-namespace:Genesyslab.Desktop.WPFCommon.Controls;assembly=Genesyslab.Desktop.WPFCommon"
              xmlns:my="clr-namespace:Adventus.Modules.Email">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Genesyslab.Desktop.WPFCommon;component/resources/newstyles/legacystyles/saaslegacybuttonstyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
              <StackPanel Orientation="Horizontal">
-        <Button Name="SaveFromHistoryButton"  Height="16" Width="16" Click="SaveAttachmentsButtonH_Click"  Visibility="{Binding Path=SaveButtonVisibilityH}">
-                     <Button.Template>
-                         <ControlTemplate>
-                             <Image Source="save.png"/>
-                         </ControlTemplate>
-                     </Button.Template>
-                 </Button>
-             </StackPanel>
+        <Button Name="SaveFromHistoryButton"  Style="{DynamicResource vistaSplitButtonStyle}" Height="24" Width="24" Click="SaveAttachmentsButtonH_Click"  Visibility="Visible">
+            <commonControls:MagicImage ResourceKey="Common.Floppy" Width="16" Height="16"/>
+        </Button>
+    </StackPanel>
 </UserControl>

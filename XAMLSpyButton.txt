@@ -1,0 +1,36 @@
+<Button x:Name="MenuItemInteractionActionPrint" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" BorderBrush="#FFCFCFCF" BorderThickness="1, 1, 1, 1" Focusable="True" FontFamily="pack://application:,,,/Genesyslab.Desktop.WPFCommon;component/Resources/Fonts/#Roboto" FontStretch="Expanded" FontWeight="Bold" Foreground="#FF3D464D" HorizontalContentAlignment="Center" Margin="0, 0, 2, 0" Padding="1, 1, 1, 1" RenderSize="24, 24" SnapsToDevicePixels="True" TabIndex="13" ToolTip="Print" VerticalContentAlignment="Center" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Button.Background>
+    <LinearGradientBrush EndPoint="0, 1">
+      <GradientStopCollection>
+        <GradientStop Color="#FFFAFAFA" />
+        <GradientStop Color="#FFECECEC" Offset="1" />
+      </GradientStopCollection>
+    </LinearGradientBrush>
+  </Button.Background>
+  <Button.Tag />
+  <Grid x:Name="Grid" RenderSize="24, 24" SnapsToDevicePixels="True">
+    <Border x:Name="Border" Background="#00000000" BorderBrush="#00000000" BorderThickness="1, 1, 1, 1" RenderSize="24, 24" SnapsToDevicePixels="True">
+      <Border x:Name="BevelBorder" BorderBrush="#00000000" RenderSize="22, 22" SnapsToDevicePixels="True" />
+    </Border>
+    <ContentPresenter HorizontalAlignment="Center" Margin="4, 4, 4, 4" RecognizesAccessKey="True" RenderSize="16, 16" SnapsToDevicePixels="True" VerticalAlignment="Center">
+      <MagicImageUidByImageUrl x:Name="MagicBoxUidByImageUrl" FontFamily="pack://application:,,,/Genesyslab.Desktop.WPFCommon;component/Resources/Fonts/#Roboto" FontStretch="Expanded" FontWeight="Bold" Foreground="#FF3D464D" Height="16" RenderSize="16, 16" SnapsToDevicePixels="True" Source="Windows.EmailView.MenuItemInteractionActionPrint" Stretch="UniformToFill" Width="16">
+        <ContentPresenter RenderSize="16, 16" SnapsToDevicePixels="True">
+          <MagicImage x:Name="MagicImageid" Background="#00FFFFFF" FontFamily="pack://application:,,,/Genesyslab.Desktop.WPFCommon;component/Resources/Fonts/#Roboto" FontStretch="Expanded" FontWeight="Bold" Foreground="#FF3D464D" Height="16" HorizontalContentAlignment="Stretch" IsAppliedSizeRatio="False" IsTabStop="False" RenderSize="16, 16" ResourceKey="Common.Printer" SnapsToDevicePixels="True" Source="" VerticalContentAlignment="Stretch" Width="16">
+            <Border Background="#00FFFFFF" RenderSize="16, 16" SnapsToDevicePixels="True">
+              <ContentPresenter RenderSize="16, 16" SnapsToDevicePixels="True">
+                <Grid RenderSize="16, 16" SnapsToDevicePixels="True">
+                  <Image x:Name="TheImage" Height="16" RenderSize="0, 0" SnapsToDevicePixels="True" Stretch="None" Visibility="Collapsed" Width="16" />
+                  <Path x:Name="TheVecImage" Fill="#FF3D464D" Height="16" RenderSize="16, 16" SnapsToDevicePixels="True" Stretch="Uniform" Stroke="#00FFFFFF" StrokeThickness="0" Width="16">
+                    <Path.Data>
+                      <StreamGeometry FillRule="Nonzero" />
+                    </Path.Data>
+                  </Path>
+                </Grid>
+              </ContentPresenter>
+            </Border>
+          </MagicImage>
+        </ContentPresenter>
+      </MagicImageUidByImageUrl>
+    </ContentPresenter>
+  </Grid>
+</Button>
