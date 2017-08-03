@@ -56,6 +56,7 @@ namespace Adventus.Modules.Email
 		// Config server parameter for subject truncation length
 		private const string CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH = "email-content-save-subject-length";
 		private const string DEFAULT_SUBJECT_LENGTH = "25";		// default value for option CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH
+		private const string METHOD_NAME = "Adventus.Modules.Email.SaveAttachmentsCommand(): ";
 
 		// constructor
         public SaveAttachmentsCommand(IObjectContainer container, ILogger logger)
@@ -63,7 +64,7 @@ namespace Adventus.Modules.Email
 			this.container = container;
 			this.configurationService = container.Resolve<IConfigurationService>();
 			this.log = logger;
-			log.Info("SaveAttachmentsCommand() entered");
+			log.Info(METHOD_NAME + "entered");
 			OutputFolderName = String.Empty;
 			isCalledFromHistory = false; // called from active online interaction
 			service = container.Resolve<IEnterpriseServiceProvider>().Resolve<IContactService>("contactService");
@@ -98,14 +99,14 @@ namespace Adventus.Modules.Email
 			                IInteraction interaction = m.Interaction;
 			                if (interaction == null)
 			                {
-			                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is NULL");
+								ShowAndLogErrorMsg("Interaction is NULL. Email saving terminated.");
 			                    return true;	// stop execution of command chain
 			                }
 
 			                IInteractionEmail interactionEmail = interaction as IInteractionEmail;
 			                if(interactionEmail == null)
 			                {
-			                    MessageBox.Show("SaveAttachmentsCommand(): Interaction is not of IInteractionEmail type");
+								ShowAndLogErrorMsg("Interaction is not of IInteractionEmail type. Email saving terminated.");
 			                    return true;	// stop execution of command chain
 			                }
 
@@ -122,19 +123,19 @@ namespace Adventus.Modules.Email
 						}
 						else
 						{
-		                    MessageBox.Show("SaveAttachmentsCommand(): Invalid view model type");
+							ShowAndLogErrorMsg("Invalid view model type. Email saving terminated.");
 							return true;	// stop execution of command chain
 						}
 					}
 					else
 					{
-						MessageBox.Show("SaveAttachmentsCommand(): Command parameter error");
+						ShowAndLogErrorMsg("Command parameter error. Email saving terminated.");
 						return true;
 					}
 				}
 				catch(Exception e)
 				{
-					MessageBox.Show("SaveAttachmentsCommand(): Type error");
+					ShowAndLogErrorMsg("Type error. Email saving terminated.");
 					return true;
 				}
 
@@ -151,7 +152,7 @@ namespace Adventus.Modules.Email
 					{
 						if (i == 2)
 						{
-							MessageBox.Show(string.Format("Cannot create output folder {0}. Exiting.", OutputFolderName), "Attention");
+							ShowAndLogErrorMsg(String.Format("Cannot create output folder {0}. Email saving terminated.", OutputFolderName));
 							return true; // Cannot create output folder. Stop execution of the command chain
 						}
 
@@ -179,7 +180,7 @@ namespace Adventus.Modules.Email
 						}
 						catch (Exception exception)
 						{
-							MessageBox.Show(string.Format("Exception creating folder at {0}: {1}.", OutputFolderName, exception.Message), "Attention");
+							ShowAndLogErrorMsg(String.Format("Exception creating folder at {0}: {1}.", OutputFolderName, exception.Message));
 							OutputFolderName = SetDesktopOutputFolder() + "\\" + SubjectTrimmed;
 						}
 					}
@@ -196,7 +197,7 @@ namespace Adventus.Modules.Email
 					int port;
 		            if (!Int32.TryParse(s_port, out port))
 					{
-						MessageBox.Show(string.Format("Configured contact server port cannot be converted to int: {0}. Email not saved.", s_port), "Attention");
+						ShowAndLogErrorMsg(String.Format("Configured contact server port cannot be converted to int: {0}. Email not saved.", s_port));
 						return true;	// Cannot parse server port. Stop execution of the command chain.
 					}
 
@@ -216,7 +217,7 @@ namespace Adventus.Modules.Email
 					}
 					catch (Exception e)
 					{
-						MessageBox.Show(string.Format("Connection to UniversalContactServer failed. Save operation stopped. {0}", e.ToString()), "Attention");
+						ShowAndLogErrorMsg(String.Format("Connection to UniversalContactServer failed. Email saving terminated: {0}", e.ToString()));
 						ucsConnection.Opened -= new EventHandler(ucsConnection_Opened);
 						ucsConnection.Error -= new EventHandler(ucsConnection_Error);
 						ucsConnection.Closed -= new EventHandler(ucsConnection_Closed);
@@ -232,7 +233,7 @@ namespace Adventus.Modules.Email
 
 					if (eventGetIxnContent == null)
 					{
-						MessageBox.Show("Request to UniversalContactServer failed. Save operation skipped.", "Attention");
+						ShowAndLogErrorMsg("Request to UniversalContactServer failed. Email saving terminated.");
 						CloseUCSConnection(ucsConnection);
 						return true;    // stop execution of the command chain
 					}
@@ -313,7 +314,7 @@ namespace Adventus.Modules.Email
 					}
 					else
 					{
-						MessageBox.Show("I don't know what to do. It is neither inbound nor outbound email.", "Attention");
+						ShowAndLogErrorMsg("I don't know what to do. It is neither inbound nor outbound email. Email saving terminated.");
 						CloseUCSConnection(ucsConnection);
 						return true;	// stop execution of command chain
 					}
@@ -338,7 +339,7 @@ namespace Adventus.Modules.Email
 						sb.AppendLine(Model.EmailPartsPath[i]);
 						sb.AppendLine();
 					}
-					MessageBox.Show(sb.ToString(), "Information");
+					//MessageBox.Show(sb.ToString(), "Information");
 					Model.Clear();
 					return false;
 			}
@@ -350,7 +351,7 @@ namespace Adventus.Modules.Email
 			string s = GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH) ?? DEFAULT_SUBJECT_LENGTH;
             if (!Int32.TryParse(s, out sl))
 			{
-				MessageBox.Show(string.Format("Configured max Email subject length cannot be converted to int: {0}. Using {1} instead.", s, DEFAULT_SUBJECT_LENGTH), "Attention");
+				ShowAndLogInfoMsg(String.Format("Configured max Email subject length cannot be converted to int: {0}. Using {1} instead.", s, DEFAULT_SUBJECT_LENGTH));
 				Int32.TryParse(DEFAULT_SUBJECT_LENGTH, out sl);	// Cannot parse server port. Stop execution of the command chain.
 			}
 			return sl;
@@ -370,7 +371,7 @@ namespace Adventus.Modules.Email
 				}
 				catch (Exception ex)
 				{
-					MessageBox.Show(string.Format("Cannot delete file {0}: {1}", p, ex.ToString()), "Attention");
+					ShowAndLogErrorMsg(String.Format("Cannot delete file {0}: {1}", p, ex.ToString()));
 				}
 			}
 			Model.EmailPartsPath.RemoveAll(x => !x.EndsWith("eml"));  
@@ -433,7 +434,7 @@ namespace Adventus.Modules.Email
 				}
 				catch(Exception ex)
 				{
-					MessageBox.Show(string.Format("Cannot attach file {0}: {1}", pathToAttachment, ex.ToString()), "Attention");
+					ShowAndLogErrorMsg(String.Format("Cannot attach file {0}: {1}", pathToAttachment, ex.ToString()));
 				}
 			}
 			
@@ -446,60 +447,9 @@ namespace Adventus.Modules.Email
 			}
 			catch(Exception ex)
 			{
-				MessageBox.Show(string.Format("Cannot save file {0}: {1}", path, ex.ToString()), "Attention");
+				ShowAndLogErrorMsg(String.Format("Cannot save file {0}: {1}", path, ex.ToString()));
 			}
 
-			//using (MailMessage mailMessage = new MailMessage(messageFrom, messageTo))
-			//{
-			//	// assumption - the email subject is (probably) decoded and stored in database in utf8 charset
-			//	string s = interactionEmail.EntrepriseEmailInteractionCurrent.Subject ?? "";
-
-			//	// Quoted printable encoding
-			//	//mailMessage.Subject = @"=?utf-8?Q?" + Encoder.EncodeQuotedPrintable(s) + @"?=";
-
-			//	// Base64 encoding
-			//	//var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(s);
-			//	//var subject = @"=?utf-8?B?" + System.Convert.ToBase64String(plainTextBytes) + @"?=";
-			//	//mailMessage.Subject = subject;
-			//	mailMessage.Subject = s;
-			//	mailMessage.SubjectEncoding = System.Text.Encoding.UTF8;
-
-			//	if (structuredMessageText != null)
-			//	{
-			//		mailMessage.Body = structuredMessageText;
-			//		mailMessage.IsBodyHtml = true;
-			//	}
-			//	else
-			//	{
-			//		mailMessage.Body = messageText;
-			//		mailMessage.IsBodyHtml = false;
-			//	}
-			//	// Add attachments
-			//	List<System.Net.Mail.Attachment> attList = new List<System.Net.Mail.Attachment>();
-			//	foreach (string pathToAttachment in Model.EmailPartsPath)
-			//	{
-			//		System.Net.Mail.Attachment att = new System.Net.Mail.Attachment(pathToAttachment);
-			//		attList.Add(att);
-			//		mailMessage.Attachments.Add(att);
-			//	}
-	
-			//	if (mailMessage != null)
-			//	{
-			//		try
-			//		{
-			//			mailMessage.Save(path);
-			//			if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
-			//		}
-			//		catch (Exception ex)
-			//		{
-			//			MessageBox.Show(string.Format("Cannot save file {0}: {1}", path, ex.ToString()), "Attention");
-			//		}
-			//		finally
-			//		{
-			//			attList.ForEach(i => i.Dispose());
-			//		}
-			//	}
-			//}
 		}
 
 		private void SaveEMLBinaryContent(InteractionContent interactionContent, string path)
@@ -511,7 +461,7 @@ namespace Adventus.Modules.Email
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show(string.Format("Cannot save file {0}: {1}", path, ex.ToString()), "Attention");
+				ShowAndLogErrorMsg(String.Format("Cannot Save File {0}: {1}", path, ex.ToString()));
 			}
 		}
 
@@ -576,7 +526,7 @@ namespace Adventus.Modules.Email
 		        catch (Exception ex)
 		        {
 					// fall through to the application options
-					MessageBox.Show(string.Format("User level configuration option {0} not defined. Trying to read application level option.", option));
+					log.Info(String.Format(METHOD_NAME + "User level configuration option {0} not defined. Trying to read application level option.", option));
 		        }
 
 // application level configuration option
@@ -597,13 +547,13 @@ namespace Adventus.Modules.Email
 				catch (Exception e)
 				{
 					opt = null;
-					MessageBox.Show(string.Format("Exception reading application level configuration option {0}", option));
+					log.Info(String.Format(METHOD_NAME + "Exception reading application level configuration option {0}", option));
 				}
 	
 				if(String.IsNullOrEmpty(opt))
 				{
 					opt = null;
-					MessageBox.Show(string.Format("Configuration option {0} not defined", option));
+					log.Info(String.Format(METHOD_NAME + "Configuration option {0} not defined", option));
 				}
 				break;
 			}
@@ -621,13 +571,13 @@ namespace Adventus.Modules.Email
 			catch (Exception e)
 			{
 				defaultDirectory = SetDesktopOutputFolder();
-				MessageBox.Show(string.Format("Output folder configuration option not defined. Using a Desktop folder."));
+				log.Info(string.Format(METHOD_NAME + "Output folder configuration option not defined. Using a Desktop folder."));
 			}
 
 			if(String.IsNullOrEmpty(defaultDirectory))
 			{
 				defaultDirectory = SetDesktopOutputFolder();
-				MessageBox.Show(string.Format("Output folder configuration option not defined. Using a folder on Desktop."));
+				log.Info(string.Format(METHOD_NAME + "Output folder configuration option not defined. Using a folder on Desktop."));
 			}
 
 			return string.Format(@"{0}\{1}", defaultDirectory, s);
@@ -648,7 +598,7 @@ namespace Adventus.Modules.Email
 
 		private void ucsConnection_Error(object sender, EventArgs e)
 		{
-			MessageBox.Show(string.Format("Error in connection to UniversalContactServer. {0}", e.ToString()), "Attention");
+			ShowAndLogErrorMsg(String.Format("Error in connection to UniversalContactServer. {0}", e.ToString()));
 		}
 
 		private void ucsConnection_Opened(object sender, EventArgs e)
@@ -673,7 +623,7 @@ namespace Adventus.Modules.Email
 			EventGetDocument eventGetDoc = (EventGetDocument)ucsConnection.Request(request);
 			if (eventGetDoc == null)
 			{
-				MessageBox.Show(string.Format("Attachment download from the UniversalContactServer failed. Save operation skipped.", "Attention"));
+				ShowAndLogErrorMsg(String.Format("Attachment download from the UniversalContactServer failed. Save operation skipped."));
 				return null;
 			}
 
@@ -684,7 +634,7 @@ namespace Adventus.Modules.Email
 			}
 			catch (Exception exception)
             {
-				MessageBox.Show(string.Format("Exception at saving attachment. Path: {0}. {1}\nOperation skipped.", path, exception.Message), "Attention");
+				ShowAndLogErrorMsg(String.Format("Exception at saving attachment. Path: {0}. {1}\nOperation skipped.", path, exception.Message));
 				return null;
             }
             return null;
@@ -709,112 +659,16 @@ namespace Adventus.Modules.Email
 			return res;
 		}
 
-/** \brief Saves email message to disk.
- *  \param message contains the email body without attachments
- *  \param isStructured true if saving message with (html) formatting (IInteractionEmail.EntrepriseEmailInteractionCurrent.StructuredText),
- *           false if saving plain text message (IInteractionEmail.EntrepriseEmailInteractionCurrent.MessageText)
- *  \param originalHtmlFile true if saving email in file email.html, false if saving in subject.html file. Subject.html includes <a href='original_email.html'></a>.
- *  \return full path of message on disk
- */
-    //    public string SaveMessage(string message, bool isStructured, bool originalHtmlFile)
-    //    {
-    //        try
-    //        {
-    //            string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-				//string subj = RemoveSpecialChars(interactionEmail.EntrepriseEmailInteractionCurrent.Subject);
+		private void ShowAndLogErrorMsg(string s)
+		{
+			MessageBox.Show(METHOD_NAME + s, "Attention");
+			log.Error(METHOD_NAME + s);
+		}
 
-				//if (subj.Length > MAX_SUBJECT_LENGTH) subj = subj.Substring(0,MAX_SUBJECT_LENGTH);
-    //            string str = string.Format(@"{0}\{1}", defaultDirectory, subj);
-    //            string path;
-    //            if(!isStructured)
-    //                path = Path.Combine(str, subj + ".txt");
-    //            else
-    //                path = Path.Combine(str, originalHtmlFile ? "original_email.html" : subj + ".html");
-
-    //            if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
-
-    //            if (File.Exists(path))   /**< don't download attachment if it's already on disk */
-    //            {
-    //                return path;
-    //            }
-    //            if (!Directory.Exists(str))
-    //            {
-    //                Directory.CreateDirectory(str);
-    //            }
-    //            if (message != null)
-    //            {
-    //                FileStream stream = new FileInfo(path).Open(FileMode.Create, FileAccess.Write);
-    //                using (StreamWriter s = new StreamWriter(stream))
-    //                    s.Write(message);
-    //                stream.Close();
-    //                return path;
-    //            }
-    //            else
-    //            {
-    //                MessageBox.Show(string.Format("Email does not contain body. {0}", path), "Attention");
-    //                return null;
-    //            }
-    //        }
-    //        catch (Exception exception)
-    //        {
-    //            MessageBox.Show(string.Format("Exception in SaveMessage. {0}", exception.ToString()), "Attention");
-    //        }
-    //        return null;
-    //    }
-    }
-
-	// this is for .net version 4.5
-	//public static class MailMessageExt
-	//{
-	//    public static void Save(this MailMessage Message, string FileName)
-	//    {
-	//        Assembly assembly = typeof(SmtpClient).Assembly;
-	//        Type _mailWriterType = 
-	//          assembly.GetType("System.Net.Mail.MailWriter");
-	
-	//        using (FileStream _fileStream = 
-	//               new FileStream(FileName, FileMode.Create))
-	//        {
-	//            // Get reflection info for MailWriter contructor
-	//            ConstructorInfo _mailWriterContructor =
-	//                _mailWriterType.GetConstructor(
-	//                    BindingFlags.Instance | BindingFlags.NonPublic,
-	//                    null,
-	//                    new Type[] { typeof(Stream) }, 
-	//                    null);
-	
-	//            // Construct MailWriter object with our FileStream
-	//            object _mailWriter = 
-	//              _mailWriterContructor.Invoke(new object[] { _fileStream });
-	
-	//            // Get reflection info for Send() method on MailMessage
-	//            MethodInfo _sendMethod =
-	//                typeof(MailMessage).GetMethod(
-	//                    "Send",
-	//                    BindingFlags.Instance | BindingFlags.NonPublic);
-	
-	//            // Call method passing in MailWriter
-	//			_sendMethod.Invoke(
-	//				Message,
-	//				BindingFlags.Instance | BindingFlags.NonPublic,
-	//				null,
-	//				new object[] { _mailWriter, true, true },
-	//				null);
-	
-	//            // Finally get reflection info for Close() method on our MailWriter
-	//            MethodInfo _closeMethod =
-	//                _mailWriter.GetType().GetMethod(
-	//                    "Close",
-	//                    BindingFlags.Instance | BindingFlags.NonPublic);
-	
-	//            // Call close method
-	//            _closeMethod.Invoke(
-	//                _mailWriter,
-	//                BindingFlags.Instance | BindingFlags.NonPublic,
-	//                null,
-	//                new object[] { },
-	//                null);
-	//        }
-	//    }
-	//}
+		private void ShowAndLogInfoMsg(string s)
+		{
+			MessageBox.Show(METHOD_NAME + s, "Attention");
+			log.Info(METHOD_NAME + s);
+		}
+	}
 }

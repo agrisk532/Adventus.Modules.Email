@@ -11,8 +11,8 @@
         </ResourceDictionary>
     </UserControl.Resources>
              <StackPanel Orientation="Horizontal">
-        <Button Name="SaveFromHistoryButton"  Style="{DynamicResource vistaSplitButtonStyle}" Height="24" Width="24" Click="SaveAttachmentsButtonH_Click"  Visibility="Visible">
-            <commonControls:MagicImage ResourceKey="Common.Floppy" Width="16" Height="16"/>
+        <Button Name="SaveFromHistoryButton" ToolTip="Kataloog" Style="{DynamicResource vistaSplitButtonStyle}" Height="24" Width="24" Margin="4,0,0,4" Click="SaveAttachmentsButtonH_Click" Visibility="{Binding SaveButtonVisibilityH}">
+            <commonControls:MagicImage ResourceKey="Common.Floppy" Width="16" Height="16" />
         </Button>
     </StackPanel>
 </UserControl>
