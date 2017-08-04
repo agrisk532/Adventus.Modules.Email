@@ -129,3 +129,25 @@ private void SaveAttachments(object interacion)
 		}
 	}, null);
 }
+
+
+ContactHistoryViewModel.cs
+
+ public void GetInteractionContent(string sInteractionId)
+    {
+      this.log.Info((object) "GetInteractionContent");
+      this.iInteractionContent = this.container.Resolve<IIWInteractionContent>();
+      this.log.Debug((object) "[.defaultContactDisplayName.] GetInteractionContent... iwContact = null!!");
+      this.iwContact = (IIWContact) null;
+      IInteractionContentHandlingResponse interactionContentHandlingResponse = this.container.Resolve<IInteractionContentHandlingResponse>();
+      interactionContentHandlingResponse.interactionContent = this.iInteractionContent;
+      interactionContentHandlingResponse.isError = false;
+      interactionContentHandlingResponse.isFinished = false;
+      interactionContentHandlingResponse.PropertyChanged += new PropertyChangedEventHandler(this.interactionContentHandlingResponse_PropertyChanged);
+      //
+	  NullableDataSourceType datasource = this.PeriodTimeSearch != eTimePeriod.Archive ? new NullableDataSourceType(DataSourceType.Main) : new NullableDataSourceType(DataSourceType.Archive);
+      //
+	  if (this.contactHandling.GetInteractionContent(sInteractionId, datasource, true, false, interactionContentHandlingResponse))
+        return;
+      this.log.Error((object) "Error Call GetInteractionContent");
+    }
