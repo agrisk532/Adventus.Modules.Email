@@ -62,6 +62,7 @@ namespace Adventus.Modules.Email
 			//IInteractionEmail modelInteractionEmail = Model.Interaction as IInteractionEmail;
 			
 				Model.Interaction = e.Interaction;
+				(Model as SaveAttachmentsViewModelBase).Dst = Genesyslab.Platform.Contacts.Protocols.ContactServer.DataSourceType.Main;
 
 			//if(eventInteractionEmail.EntrepriseEmailInteractionCurrent.Id		== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id ||
 			//   eventInteractionEmail.EntrepriseEmailInteractionCurrent.ParentID	== modelInteractionEmail.EntrepriseEmailInteractionCurrent.Id)

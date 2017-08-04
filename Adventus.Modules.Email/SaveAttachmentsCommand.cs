@@ -117,7 +117,7 @@ namespace Adventus.Modules.Email
 						else
 						if(mH != null)	// ISaveAttachmentsViewModelH used (interaction from history)
 						{
-							enterpriseEmailInteraction = service.GetInteractionContent(channel, mH.SelectedInteractionId) as Genesyslab.Enterprise.Model.Interaction.IEmailInteraction;
+							enterpriseEmailInteraction = service.GetInteractionContent(channel, mH.SelectedInteractionId, (Genesyslab.Enterprise.Services.DataSourceType)mH.Dst) as Genesyslab.Enterprise.Model.Interaction.IEmailInteraction;
 							Model = mH;
 							isCalledFromHistory = true;
 						}
@@ -228,6 +228,7 @@ namespace Adventus.Modules.Email
 					request.InteractionId = enterpriseEmailInteraction.Id;
 					request.IncludeBinaryContent = true;
 					request.IncludeAttachments = true;
+					request.DataSource = new NullableDataSourceType(Model.Dst);
 
 					EventGetInteractionContent eventGetIxnContent = (EventGetInteractionContent)ucsConnection.Request(request);
 
@@ -619,6 +620,7 @@ namespace Adventus.Modules.Email
 			RequestGetDocument request = new RequestGetDocument();
 			request.DocumentId = documentId;
 			request.IncludeBinaryContent = true;
+			request.DataSource = new NullableDataSourceType(Model.Dst);
 
 			EventGetDocument eventGetDoc = (EventGetDocument)ucsConnection.Request(request);
 			if (eventGetDoc == null)

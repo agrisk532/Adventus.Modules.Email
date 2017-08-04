@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 
+
 namespace Adventus.Modules.Email
 {
 /** \class SaveAttachmentsViewModel
@@ -8,6 +9,7 @@ namespace Adventus.Modules.Email
     public class SaveAttachmentsViewModelH : SaveAttachmentsViewModelBase, ISaveAttachmentsViewModelH
     {
 		public string SelectedInteractionId {get; set;} // selected in history interaction id
+
 
 		private Visibility saveButtonVisibilityH;
 		

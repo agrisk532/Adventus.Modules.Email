@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel;
-using Genesyslab.Desktop.Modules.Core.Model.Interactions;
+using Genesyslab.Platform.Contacts.Protocols.ContactServer;
 
 namespace Adventus.Modules.Email
 {
@@ -9,6 +9,7 @@ namespace Adventus.Modules.Email
 	    
 		public List<string> emailPartsPath;   /**< full path on disk of email body and each attachment */
         public bool EmailPartsInfoStored { get; set; }  /**< set this to true after storing message body and all attachment paths */
+		public DataSourceType Dst {get; set;} // Main interaction or from archive
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
