@@ -7,6 +7,9 @@ using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 using Genesyslab.Desktop.Modules.Windows.Event;
 using System.Windows.Threading;
+using System.Windows.Media;
+using Genesyslab.Desktop.Infrastructure.ViewManager;
+using Genesyslab.Desktop.Modules.Contacts.ContactHistory;
 
 namespace Adventus.Modules.Email
 {
@@ -36,6 +39,19 @@ namespace Adventus.Modules.Email
         public void Create()
         {
 			container.Resolve<IViewEventManager>().Subscribe(MyEventHandler2);
+			IViewManager ivm = container.Resolve<IViewManager>();
+
+			//					BundleView bv = this.Model.BundleView;
+			//		BundlePartyView bpv = Ivm.GetViewInRegion(bv, "BundlePartyRegion", "BundlePartyView") as BundlePartyView;
+
+			//		object[] v = Ivm.GetAllViewsInRegion(bpv, "PartyRegion");
+			//		PartyView pv = v.OfType<PartyView>().First();
+
+			//		object[] v1 = Ivm.GetAllViewsInRegion(pv, "CustomBundlePartyRegion");
+			//		InteractionQueueView iqv = v1.OfType<InteractionQueueView>().First();
+
+
+			//var iv = ivm.GetAllViewsInRegion("ToolbarWorkplaceRegion");
 		}
 
 		public void MyEventHandler2(object eventObject)

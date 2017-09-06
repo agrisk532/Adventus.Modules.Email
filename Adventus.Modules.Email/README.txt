@@ -151,3 +151,6 @@ ContactHistoryViewModel.cs
         return;
       this.log.Error((object) "Error Call GetInteractionContent");
     }
+
+
+
