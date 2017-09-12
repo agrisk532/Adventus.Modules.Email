@@ -62,7 +62,7 @@ namespace Adventus.Modules.Email
 					else
 					{
 					
-					WriteXML(ge);
+					//WriteXML(ge);
 
 					//if((string)ge.Action[0].Action == "ActivedThisPanel" && (string)ge.Action[0].Parameters[0] == "MyContactHistory")
 					//{
@@ -72,38 +72,46 @@ namespace Adventus.Modules.Email
 
 					if(ge.Context == Context.ToString())
 					{
-						if(((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId != null) {}
-						if(ge.Target == "ContactHistory")
+						if(((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId != null)
 						{
-							if((string)ge.Action[0].Action == "LoadInteractionInformation")
+							if(((ContactHistoryViewModel)Chv.DataContext).InteractionItems.Count == 0)
 							{
-
-					//if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == "ContactMain" )
-					//if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == Context.ToString())	// allow saving email from History tab of any parent page, not only contact directory
-
-						Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent ic =
-							ge.Action[0].Parameters[0] as Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent;
-						Genesyslab.Platform.Contacts.Protocols.ContactServer.InteractionAttributes ia = ic.InteractionAttributes;
-						if(ia.MediaTypeId == "email")
-						{
-							Model.SelectedInteractionId = ia.Id;	// selected interaction id
-							(Model as SaveAttachmentsViewModelBase).Dst = ic.DataSourceType;
+								Model.SaveButtonVisibilityH = Visibility.Hidden;
+							}
+							Model.SelectedInteractionId = ((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId;
 							Model.SaveButtonVisibilityH = Visibility.Visible;
-							IsInteractionSelected = true;
-						}
-						else
-						{
-							Model.SaveButtonVisibilityH = Visibility.Hidden;
-							IsInteractionSelected = false;
-						}
+						//if(ge.Target == "ContactHistory")
+						//{
+							//if((string)ge.Action[0].Action == "LoadInteractionInformation")
+							//{
 
-					}
-					}
+					////if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == "ContactMain" )
+					////if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == Context.ToString())	// allow saving email from History tab of any parent page, not only contact directory
+
+						//Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent ic =
+							//ge.Action[0].Parameters[0] as Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent;
+						//Genesyslab.Platform.Contacts.Protocols.ContactServer.InteractionAttributes ia = ic.InteractionAttributes;
+						//if(ia.MediaTypeId == "email")
+						//{
+							//Model.SelectedInteractionId = ia.Id;	// selected interaction id
+							//(Model as SaveAttachmentsViewModelBase).Dst = ic.DataSourceType;
+							//Model.SaveButtonVisibilityH = Visibility.Visible;
+							//IsInteractionSelected = true;
+						//}
+						//else
+						//{
+							//Model.SaveButtonVisibilityH = Visibility.Hidden;
+							//IsInteractionSelected = false;
+						//}
+
+					//}
+					//}
 					}
 					else
 					{
-						Model.SaveButtonVisibilityH = IsInteractionSelected ? Visibility.Visible : Visibility.Hidden;
+						Model.SaveButtonVisibilityH = Visibility.Hidden;
 						return;
+					}
 					}
 					}
 				}
