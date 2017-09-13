@@ -12,6 +12,9 @@ using Genesyslab.Desktop.Infrastructure.ViewManager;
 using Genesyslab.Desktop.Modules.Contacts.ContactHistory;
 using System.IO;
 using System.Windows.Media.Media3D;
+using Genesyslab.Desktop.Modules.Contacts.IWInteraction;
+using System.Linq;
+using System.Collections;
 
 namespace Adventus.Modules.Email
 {
@@ -25,7 +28,8 @@ namespace Adventus.Modules.Email
 		public ICase Case { get; set; }
 		public bool IsInteractionSelected { get; set; }
 		public ContactHistoryView Chv {get;set;}
-		public IContactHistoryViewModel Chvm {get;set;}
+		public ContactHistoryViewModel Chvm {get;set;}
+		IInteractionItemViewModel SelectedItem {get;set;}
 
         public SaveAttachmentsViewH(IObjectContainer container, ISaveAttachmentsViewModelH model)
         {
@@ -46,10 +50,11 @@ namespace Adventus.Modules.Email
         {
 			IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
 			Context = (object) contextDictionary["ContactMode"];
-			container.Resolve<IViewEventManager>().Subscribe(MyEventHandler2);
+			//container.Resolve<IViewEventManager>().Subscribe(MyEventHandler2);
 			Chv = FindUpVisualTree<ContactHistoryView>(SaveFromHistoryButton);
+			Chvm = (ContactHistoryViewModel)Chv.DataContext;
 			//Chv.PropertyChanged += Chv_PropertyChanged;
-			((ContactHistoryViewModel)Chv.Model).PropertyChanged += ContactHistoryViewModel_PropertyChanged;
+			Chvm.PropertyChanged += ContactHistoryViewModel_PropertyChanged;
 		}
 
 		private void ContactHistoryViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -58,12 +63,27 @@ namespace Adventus.Modules.Email
 			{
 				if(e.PropertyName == "InteractionItems")
 				{
-					if(((ContactHistoryViewModel)Chv.Model).InteractionItems.Count == 0)
-					{
-						Model.SelectedInteractionId = null;
-						Model.SaveButtonVisibilityH = Visibility.Hidden;
-						return;
-					}
+					// for some reason this condition is always true
+					//if(((ContactHistoryViewModel)Chv.Model).InteractionItems.Count == 0)
+					//{
+					//	Model.SelectedInteractionId = null;
+					//	Model.SaveButtonVisibilityH = Visibility.Hidden;
+					//	return;
+					//}
+					Model.SelectedInteractionId = null;
+					Model.SaveButtonVisibilityH = Visibility.Hidden;
+				}
+				else
+				if(e.PropertyName == "SelectedInteractionId")
+				{
+					Model.SelectedInteractionId = Chvm.SelectedInteractionId;
+					//var i = GetChildOfType<ListView>(Chv); // this line works if needed
+					string type = Chv.GetTypeForInteractionId(Chvm.SelectedInteractionId);
+					Model.SaveButtonVisibilityH = (type == "email") ? Visibility.Visible : Visibility.Hidden;
+				}
+				else
+				{
+					Model.SaveButtonVisibilityH = Visibility.Hidden;
 				}
 			});
 			//else
@@ -201,6 +221,18 @@ namespace Adventus.Modules.Email
 		    return current as T;   
 		}
 
-		//delegate bool ExecuteDelegate(IDictionary<string, object> parameters, IProgressUpdater progressUpdater);
+		public static T GetChildOfType<T>(DependencyObject depObj) where T : DependencyObject
+		{
+		    if (depObj == null) return null;
+		
+		    for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
+		    {
+		        var child = VisualTreeHelper.GetChild(depObj, i);
+		
+		        var result = (child as T) ?? GetChildOfType<T>(child);
+		        if (result != null) return result;
+		    }
+		    return null;
+		}
 	}
 }
