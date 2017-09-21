@@ -242,7 +242,9 @@ namespace Adventus.Modules.Email
 					// create and save message
 
 					//string messageFrom = (interaction.GetAttachedData("FromAddress") ?? "").ToString();
+
 					string messageFrom = enterpriseEmailInteraction.From;
+					//string messageFrom = "\"ERGO kahjukäsitlus\" <kahju@ergo.ee>";
 					string messageTo;
 					try
 					{
@@ -408,10 +410,14 @@ namespace Adventus.Modules.Email
 		// attachments must be saved on the file system before calling this method. Use method SaveAttachments(ucsConnection, attachmentList)
 		private void AssembleAndSaveEMLBinaryContent(string messageFrom, string messageTo, string messageText, string structuredMessageText, string path)
 		{
-			var message = new MimeMessage ();
-			message.From.Add (new MailboxAddress (messageFrom));
-			message.To.Add (new MailboxAddress (messageTo));
-			//message.Subject = "";
+			var message = new MimeMessage();
+			// get the name and address
+
+			string name, addr;
+			SplitAddress(messageFrom, out name, out addr);
+			message.From.Add(new MailboxAddress(name, addr));
+			SplitAddress(messageTo, out name, out addr);
+			message.To.Add(new MailboxAddress(name, addr));
 			HeaderList l = message.Headers;
 			string s = enterpriseEmailInteraction.Subject ?? "";
 			//l["Subject"] = @"=?utf-8?Q?" + Encoder.EncodeQuotedPrintable(s) + @"?=";
@@ -420,12 +426,12 @@ namespace Adventus.Modules.Email
 			//var subject = @"=?utf-8?B?" + System.Convert.ToBase64String(plainTextBytes) + @"?=";
 			l["Subject"] = s;
 
-			var builder = new BodyBuilder ();
+			var builder = new BodyBuilder();
 
-            // Set the plain-text version of the message text
-            builder.TextBody = messageText;
-            // Set the html version of the message text
-            builder.HtmlBody = structuredMessageText;
+			// Set the plain-text version of the message text
+			builder.TextBody = messageText;
+			// Set the html version of the message text
+			builder.HtmlBody = structuredMessageText;
 
 			foreach (string pathToAttachment in Model.EmailPartsPath)
 			{
@@ -433,24 +439,50 @@ namespace Adventus.Modules.Email
 				{
 					builder.Attachments.Add(pathToAttachment);
 				}
-				catch(Exception ex)
+				catch (Exception ex)
 				{
 					ShowAndLogErrorMsg(String.Format("Cannot attach file {0}: {1}", pathToAttachment, ex.ToString()));
 				}
 			}
-			
-            // Now we just need to set the message body and we're done
-            message.Body = builder.ToMessageBody();
+
+			// Now we just need to set the message body and we're done
+			message.Body = builder.ToMessageBody();
 			try
 			{
 				message.WriteTo(path);
 				if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				ShowAndLogErrorMsg(String.Format("Cannot save file {0}: {1}", path, ex.ToString()));
 			}
 
+		}
+
+		private static void SplitAddress(string address, out string name, out string addr)
+		{
+			int start = address.IndexOf("\"") + 1;
+			int end;
+			if(start != 0)
+			{
+				end = address.IndexOf("\"", start);
+				name = address.Substring(start, end - start);
+			}
+			else
+			{
+				name = String.Empty;
+			}
+
+			start = address.IndexOf("<") + 1;
+			if(start != 0)
+			{
+				end = address.IndexOf(">", start);
+				addr = address.Substring(start, end - start);
+			}
+			else
+			{
+				addr = address;
+			}
 		}
 
 		private void SaveEMLBinaryContent(InteractionContent interactionContent, string path)
