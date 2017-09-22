@@ -15,6 +15,9 @@ using System.Windows.Media.Media3D;
 using Genesyslab.Desktop.Modules.Contacts.IWInteraction;
 using System.Linq;
 using System.Collections;
+using Genesyslab.Desktop.WPFCommon.Controls;
+using Genesyslab.Desktop.Modules.Windows.Interactions;
+using Genesyslab.Desktop.Modules.Contacts.ContactDetail;
 
 namespace Adventus.Modules.Email
 {
@@ -26,17 +29,18 @@ namespace Adventus.Modules.Email
         readonly IObjectContainer container;
         public object Context { get; set; }
 		public ICase Case { get; set; }
-		public bool IsInteractionSelected { get; set; }
+		//public bool IsInteractionSelected { get; set; }
 		public ContactHistoryView Chv {get;set;}
 		public ContactHistoryViewModel Chvm {get;set;}
 		IInteractionItemViewModel SelectedItem {get;set;}
+		SortableTabControl Stc {get;set;}
 
         public SaveAttachmentsViewH(IObjectContainer container, ISaveAttachmentsViewModelH model)
         {
             this.container = container;
             this.Model = model;
             InitializeComponent();
-			IsInteractionSelected = false;
+			//IsInteractionSelected = false;
         }
         public ISaveAttachmentsViewModelH Model
         {
@@ -50,7 +54,7 @@ namespace Adventus.Modules.Email
         {
 			IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
 			Context = (object) contextDictionary["ContactMode"];
-			container.Resolve<IViewEventManager>().Subscribe(MyEventHandler2);
+			container.Resolve<IViewEventManager>().Subscribe(IViewEventManager_EventHandler);
 			Chv = FindUpVisualTree<ContactHistoryView>(SaveFromHistoryButton);
 			//Chvm = (ContactHistoryViewModel)Chv.DataContext;
 			//Chv.PropertyChanged += Chv_PropertyChanged;
@@ -114,7 +118,7 @@ namespace Adventus.Modules.Email
 		//	});
 		//}
 
-		public void MyEventHandler2(object eventObject)
+		public void IViewEventManager_EventHandler(object eventObject)
 		{
 			// To go to the main thread
 			this.Dispatcher.Invoke(() =>
@@ -137,10 +141,11 @@ namespace Adventus.Modules.Email
 
 					if(ge.Context == Context.ToString())
 					{
-						if(((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId != null)
+						string s = ((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId;
+						if(s != null)
 						{
-							Model.SelectedInteractionId = ((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId;
-							Model.SaveButtonVisibilityH = Visibility.Visible;
+							Model.SelectedInteractionId = s;
+							//IInteractionItemViewModel ivm = Chv.SelectedItem;
 								if (ge.Target == "ContactHistory")
 								{
 									if ((string)ge.Action[0].Action == "LoadInteractionInformation")
@@ -157,14 +162,33 @@ namespace Adventus.Modules.Email
 											Model.SelectedInteractionId = ia.Id;    // selected interaction id
 											(Model as SaveAttachmentsViewModelBase).Dst = ic.DataSourceType;
 											Model.SaveButtonVisibilityH = Visibility.Visible;
-											IsInteractionSelected = true;
+											//IsInteractionSelected = true;
+											string attachedData = (string)ia.AllAttributes["CategoryName"] ?? "Hi";
+											if(attachedData == "test")
+											{
+												Stc = GetChildOfType<SortableTabControl>(Chv); 
+										        foreach(UserControl uc in Stc.Items)
+												{
+													//if (uc is IStaticCaseDataView) { uc.Visibility = Visibility.Hidden;}
+													if(uc is INotepadView || uc is IContactDetailView) { uc.Visibility = Visibility.Hidden;}
+												}
+												Model.SaveButtonVisibilityH = Visibility.Hidden;
+											}
+											else
+											{
+												Stc = GetChildOfType<SortableTabControl>(Chv); 
+										        foreach(UserControl uc in Stc.Items)
+												{
+													uc.Visibility = Visibility.Visible;
+												}
+												Model.SaveButtonVisibilityH = Visibility.Visible;
+											}
 										}
 										else
 										{
 											Model.SaveButtonVisibilityH = Visibility.Hidden;
-											IsInteractionSelected = false;
+											//IsInteractionSelected = false;
 										}
-
 									}
 								}
 							}
@@ -187,7 +211,7 @@ namespace Adventus.Modules.Email
  */
         public void Destroy()
         {
-			container.Resolve<IViewEventManager>().Unsubscribe(MyEventHandler2);
+			container.Resolve<IViewEventManager>().Unsubscribe(IViewEventManager_EventHandler);
         }
 
 /** \brief Event handler
