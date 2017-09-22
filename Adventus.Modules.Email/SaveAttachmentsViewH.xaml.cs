@@ -50,51 +50,51 @@ namespace Adventus.Modules.Email
         {
 			IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
 			Context = (object) contextDictionary["ContactMode"];
-			//container.Resolve<IViewEventManager>().Subscribe(MyEventHandler2);
+			container.Resolve<IViewEventManager>().Subscribe(MyEventHandler2);
 			Chv = FindUpVisualTree<ContactHistoryView>(SaveFromHistoryButton);
-			Chvm = (ContactHistoryViewModel)Chv.DataContext;
+			//Chvm = (ContactHistoryViewModel)Chv.DataContext;
 			//Chv.PropertyChanged += Chv_PropertyChanged;
-			Chvm.PropertyChanged += ContactHistoryViewModel_PropertyChanged;
+			//Chvm.PropertyChanged += ContactHistoryViewModel_PropertyChanged;
 		}
 
-		private void ContactHistoryViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			this.Dispatcher.Invoke(() =>
-			{
-				if(e.PropertyName == "InteractionItems")
-				{
-					// for some reason this condition is always true
-					//if(((ContactHistoryViewModel)Chv.Model).InteractionItems.Count == 0)
-					//{
-					//	Model.SelectedInteractionId = null;
-					//	Model.SaveButtonVisibilityH = Visibility.Hidden;
-					//	return;
-					//}
-					Model.SelectedInteractionId = null;
-					Model.SaveButtonVisibilityH = Visibility.Hidden;
-				}
-				else
-				if(e.PropertyName == "SelectedInteractionId")
-				{
-					Model.SelectedInteractionId = Chvm.SelectedInteractionId;
-					//var i = GetChildOfType<ListView>(Chv); // this line works if needed
-					string type = Chv.GetTypeForInteractionId(Chvm.SelectedInteractionId);
-					Model.SaveButtonVisibilityH = (type == "email") ? Visibility.Visible : Visibility.Hidden;
-				}
-				else
-				{
-					Model.SaveButtonVisibilityH = Visibility.Hidden;
-				}
-			});
-			//else
-			//if(e.PropertyName == "SelectedInteractionId")
-			//{
-			//	Model.SelectedInteractionId = ((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId;
-			//}
-			//else
-			//{
-			//}
-		}
+		//private void ContactHistoryViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		//{
+		//	this.Dispatcher.Invoke(() =>
+		//	{
+		//		if(e.PropertyName == "InteractionItems")
+		//		{
+		//			// for some reason this condition is always true
+		//			//if(((ContactHistoryViewModel)Chv.Model).InteractionItems.Count == 0)
+		//			//{
+		//			//	Model.SelectedInteractionId = null;
+		//			//	Model.SaveButtonVisibilityH = Visibility.Hidden;
+		//			//	return;
+		//			//}
+		//			Model.SelectedInteractionId = null;
+		//			Model.SaveButtonVisibilityH = Visibility.Hidden;
+		//		}
+		//		else
+		//		if(e.PropertyName == "SelectedInteractionId")
+		//		{
+		//			Model.SelectedInteractionId = Chvm.SelectedInteractionId;
+		//			//var i = GetChildOfType<ListView>(Chv); // this line works if needed
+		//			string type = Chv.GetTypeForInteractionId(Chvm.SelectedInteractionId);
+		//			Model.SaveButtonVisibilityH = (type == "email") ? Visibility.Visible : Visibility.Hidden;
+		//		}
+		//		else
+		//		{
+		//			Model.SaveButtonVisibilityH = Visibility.Hidden;
+		//		}
+		//	});
+		//	//else
+		//	//if(e.PropertyName == "SelectedInteractionId")
+		//	//{
+		//	//	Model.SelectedInteractionId = ((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId;
+		//	//}
+		//	//else
+		//	//{
+		//	//}
+		//}
 
 		//private void Chv_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		//{
@@ -141,33 +141,33 @@ namespace Adventus.Modules.Email
 						{
 							Model.SelectedInteractionId = ((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId;
 							Model.SaveButtonVisibilityH = Visibility.Visible;
-						//if(ge.Target == "ContactHistory")
-						//{
-							//if((string)ge.Action[0].Action == "LoadInteractionInformation")
-							//{
+								if (ge.Target == "ContactHistory")
+								{
+									if ((string)ge.Action[0].Action == "LoadInteractionInformation")
+									{
 
-					////if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == "ContactMain" )
-					////if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == Context.ToString())	// allow saving email from History tab of any parent page, not only contact directory
+										//if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == "ContactMain" )
+										//if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == Context.ToString())	// allow saving email from History tab of any parent page, not only contact directory
 
-						//Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent ic =
-							//ge.Action[0].Parameters[0] as Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent;
-						//Genesyslab.Platform.Contacts.Protocols.ContactServer.InteractionAttributes ia = ic.InteractionAttributes;
-						//if(ia.MediaTypeId == "email")
-						//{
-							//Model.SelectedInteractionId = ia.Id;	// selected interaction id
-							//(Model as SaveAttachmentsViewModelBase).Dst = ic.DataSourceType;
-							//Model.SaveButtonVisibilityH = Visibility.Visible;
-							//IsInteractionSelected = true;
-						//}
-						//else
-						//{
-							//Model.SaveButtonVisibilityH = Visibility.Hidden;
-							//IsInteractionSelected = false;
-						//}
+										Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent ic =
+											ge.Action[0].Parameters[0] as Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent;
+										Genesyslab.Platform.Contacts.Protocols.ContactServer.InteractionAttributes ia = ic.InteractionAttributes;
+										if (ia.MediaTypeId == "email")
+										{
+											Model.SelectedInteractionId = ia.Id;    // selected interaction id
+											(Model as SaveAttachmentsViewModelBase).Dst = ic.DataSourceType;
+											Model.SaveButtonVisibilityH = Visibility.Visible;
+											IsInteractionSelected = true;
+										}
+										else
+										{
+											Model.SaveButtonVisibilityH = Visibility.Hidden;
+											IsInteractionSelected = false;
+										}
 
-					//}
-					//}
-					}
+									}
+								}
+							}
 					else
 					{
 						Model.SaveButtonVisibilityH = Visibility.Hidden;
