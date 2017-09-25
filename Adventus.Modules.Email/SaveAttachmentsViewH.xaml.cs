@@ -29,18 +29,15 @@ namespace Adventus.Modules.Email
         readonly IObjectContainer container;
         public object Context { get; set; }
 		public ICase Case { get; set; }
-		//public bool IsInteractionSelected { get; set; }
 		public ContactHistoryView Chv {get;set;}
 		public ContactHistoryViewModel Chvm {get;set;}
 		IInteractionItemViewModel SelectedItem {get;set;}
-		SortableTabControl Stc {get;set;}
 
         public SaveAttachmentsViewH(IObjectContainer container, ISaveAttachmentsViewModelH model)
         {
             this.container = container;
             this.Model = model;
             InitializeComponent();
-			//IsInteractionSelected = false;
         }
         public ISaveAttachmentsViewModelH Model
         {
@@ -133,71 +130,73 @@ namespace Adventus.Modules.Email
 					
 					//WriteXML(ge);
 
-					//if((string)ge.Action[0].Action == "ActivedThisPanel" && (string)ge.Action[0].Parameters[0] == "MyContactHistory")
-					//{
-					//	Model.SaveButtonVisibilityH = Visibility.Hidden;
-					//	IsInteractionSelected = false;
-					//}
-
-					if(ge.Context == Context.ToString())
-					{
-						string s = ((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId;
-						if(s != null)
+						if(ge.Context == Context.ToString())
 						{
-							Model.SelectedInteractionId = s;
-							//IInteractionItemViewModel ivm = Chv.SelectedItem;
+							string s = ((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId;
+							if(s != null)
+							{
+								Model.SelectedInteractionId = s;
 								if (ge.Target == "ContactHistory")
 								{
 									if ((string)ge.Action[0].Action == "LoadInteractionInformation")
 									{
-
+	
 										//if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == "ContactMain" )
 										//if(ge != null && (string)ge.Action[0].Action == "LoadInteractionInformation" && ge.Target == "ContactHistory" && ge.Context == Context.ToString())	// allow saving email from History tab of any parent page, not only contact directory
-
+	
 										Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent ic =
 											ge.Action[0].Parameters[0] as Genesyslab.Desktop.Modules.Contacts.IWInteraction.IWInteractionContent;
 										Genesyslab.Platform.Contacts.Protocols.ContactServer.InteractionAttributes ia = ic.InteractionAttributes;
 										if (ia.MediaTypeId == "email")
 										{
-											Model.SelectedInteractionId = ia.Id;    // selected interaction id
-											(Model as SaveAttachmentsViewModelBase).Dst = ic.DataSourceType;
-											Model.SaveButtonVisibilityH = Visibility.Visible;
-											//IsInteractionSelected = true;
-											string attachedData = (string)ia.AllAttributes["CategoryName"] ?? "Hi";
-											if(attachedData == "test")
+											SortableTabControl Stc = GetChildOfType<SortableTabControl>(Chv); 
+											if(Stc != null)
 											{
-												Stc = GetChildOfType<SortableTabControl>(Chv); 
-										        foreach(UserControl uc in Stc.Items)
+												DockPanel dp = getDockPanelInteractionActions();
+												Model.SelectedInteractionId = ia.Id;    // selected interaction id
+												(Model as SaveAttachmentsViewModelBase).Dst = ic.DataSourceType;
+												string attachedData = (string)ia.AllAttributes["CategoryName"] ?? "Hi";
+												if(attachedData == "test")
 												{
-													//if (uc is IStaticCaseDataView) { uc.Visibility = Visibility.Hidden;}
-													if(uc is INotepadView || uc is IContactDetailView) { uc.Visibility = Visibility.Hidden;}
+													foreach (UserControl uc in Stc.Items)
+													{
+														//if (uc is IStaticCaseDataView) { uc.Visibility = Visibility.Hidden;}
+														if (uc is INotepadView || uc is IContactDetailView)
+														{
+															uc.Visibility = Visibility.Hidden;
+														}
+													}
+													dp.Visibility = Visibility.Hidden;
+													Model.SaveButtonVisibilityH = Visibility.Hidden;
 												}
-												Model.SaveButtonVisibilityH = Visibility.Hidden;
+												else
+												{
+											        foreach(UserControl uc in Stc.Items)
+													{
+														uc.Visibility = Visibility.Visible;
+													}
+													dp.Visibility = Visibility.Visible;
+													Model.SaveButtonVisibilityH = Visibility.Visible;
+												}
 											}
 											else
 											{
-												Stc = GetChildOfType<SortableTabControl>(Chv); 
-										        foreach(UserControl uc in Stc.Items)
-												{
-													uc.Visibility = Visibility.Visible;
-												}
-												Model.SaveButtonVisibilityH = Visibility.Visible;
+												Model.SaveButtonVisibilityH = Visibility.Hidden;
 											}
 										}
 										else
 										{
 											Model.SaveButtonVisibilityH = Visibility.Hidden;
-											//IsInteractionSelected = false;
 										}
 									}
 								}
+								else
+							{
+								Model.SaveButtonVisibilityH = Visibility.Hidden;
+								return;
 							}
-					else
-					{
-						Model.SaveButtonVisibilityH = Visibility.Hidden;
-						return;
-					}
-					}
+							}
+						}
 					}
 				}
 				catch(Exception e)
@@ -207,9 +206,21 @@ namespace Adventus.Modules.Email
 			});
 		}
 
-/** \brief Executed once, at the view object destruction
- */
-        public void Destroy()
+		private DockPanel getDockPanelInteractionActions()
+		{
+			return FindChild(Chv, child =>
+			{
+				var dockPanel = child as DockPanel;
+				if (dockPanel != null && dockPanel.Name == "dockPanelInteractionActions")
+					return true;
+				else
+					return false;
+			}) as DockPanel;
+		}
+
+		/** \brief Executed once, at the view object destruction
+		 */
+		public void Destroy()
         {
 			container.Resolve<IViewEventManager>().Unsubscribe(IViewEventManager_EventHandler);
         }
@@ -256,6 +267,31 @@ namespace Adventus.Modules.Email
 		        var result = (child as T) ?? GetChildOfType<T>(child);
 		        if (result != null) return result;
 		    }
+		    return null;
+		}
+
+	
+		public static DependencyObject FindChild(DependencyObject parent, Func<DependencyObject, bool> predicate)
+		{
+		    if (parent == null) return null;
+		
+		    int childrenCount = VisualTreeHelper.GetChildrenCount(parent);
+		    for (int i = 0; i < childrenCount; i++)
+		    {
+		        var child = VisualTreeHelper.GetChild(parent, i);
+		
+		        if (predicate(child))
+		        {
+		            return child;
+		        }
+		        else
+		        {
+		            var foundChild = FindChild(child, predicate);
+		            if (foundChild != null)
+		                return foundChild;
+		        }
+		    }
+		
 		    return null;
 		}
 	}
