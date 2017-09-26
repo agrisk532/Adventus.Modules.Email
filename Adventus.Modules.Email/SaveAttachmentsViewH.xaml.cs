@@ -4,17 +4,10 @@ using System.Windows;
 using System.Windows.Controls;
 using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
-using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 using Genesyslab.Desktop.Modules.Windows.Event;
-using System.Windows.Threading;
 using System.Windows.Media;
-using Genesyslab.Desktop.Infrastructure.ViewManager;
 using Genesyslab.Desktop.Modules.Contacts.ContactHistory;
 using System.IO;
-using System.Windows.Media.Media3D;
-using Genesyslab.Desktop.Modules.Contacts.IWInteraction;
-using System.Linq;
-using System.Collections;
 using Genesyslab.Desktop.WPFCommon.Controls;
 using Genesyslab.Desktop.Modules.Windows.Interactions;
 using Genesyslab.Desktop.Modules.Contacts.ContactDetail;
@@ -28,10 +21,9 @@ namespace Adventus.Modules.Email
     {
         readonly IObjectContainer container;
         public object Context { get; set; }
-		public ICase Case { get; set; }
 		public ContactHistoryView Chv {get;set;}
-		public ContactHistoryViewModel Chvm {get;set;}
-		IInteractionItemViewModel SelectedItem {get;set;}
+		//public ContactHistoryViewModel Chvm {get;set;}
+		//IInteractionItemViewModel SelectedItem {get;set;}
 
         public SaveAttachmentsViewH(IObjectContainer container, ISaveAttachmentsViewModelH model)
         {
@@ -125,12 +117,12 @@ namespace Adventus.Modules.Email
 					GenericEvent ge = eventObject as GenericEvent;
 					if(ge == null)
 						return;
-					else
+					else	// ge != null
 					{
 					
 					//WriteXML(ge);
 
-						if(ge.Context == Context.ToString())
+						if(ge.Context == Context.ToString())	// event for corresponding instance of SaveAttachmentsViewH. In total there are 3 instances.
 						{
 							string s = ((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId;
 							if(s != null)
@@ -149,7 +141,8 @@ namespace Adventus.Modules.Email
 										Genesyslab.Platform.Contacts.Protocols.ContactServer.InteractionAttributes ia = ic.InteractionAttributes;
 										if (ia.MediaTypeId == "email")
 										{
-											SortableTabControl Stc = GetChildOfType<SortableTabControl>(Chv); 
+											//SortableTabControl Stc = GetChildOfType<SortableTabControl>(Chv);
+											SortableTabControl Stc = getTabControl();
 											if(Stc != null)
 											{
 												DockPanel dp = getDockPanelInteractionActions();
@@ -158,7 +151,7 @@ namespace Adventus.Modules.Email
 												string attachedData = (string)ia.AllAttributes["CategoryName"] ?? "Hi";
 												if(attachedData == "test")
 												{
-													foreach (UserControl uc in Stc.Items)
+													foreach (UserControl uc in Stc.Items)	// hide info in tab control
 													{
 														//if (uc is IStaticCaseDataView) { uc.Visibility = Visibility.Hidden;}
 														if (uc is INotepadView || uc is IContactDetailView)
@@ -166,8 +159,8 @@ namespace Adventus.Modules.Email
 															uc.Visibility = Visibility.Hidden;
 														}
 													}
-													dp.Visibility = Visibility.Hidden;
-													Model.SaveButtonVisibilityH = Visibility.Hidden;
+													dp.Visibility = Visibility.Hidden;	// hide dockPanelInteractionActions
+													Model.SaveButtonVisibilityH = Visibility.Hidden;	// hide SaveAttachmentsViewH button
 												}
 												else
 												{
@@ -179,23 +172,34 @@ namespace Adventus.Modules.Email
 													Model.SaveButtonVisibilityH = Visibility.Visible;
 												}
 											}
-											else
+											else	// Stc == null
 											{
 												Model.SaveButtonVisibilityH = Visibility.Hidden;
 											}
 										}
-										else
+										else	// ia.MediaTypeId != "email"
 										{
+											// ia.MediaTypeId != "email"
 											Model.SaveButtonVisibilityH = Visibility.Hidden;
 										}
 									}
+									else	// (string)ge.Action[0].Action != "LoadInteractionInformation"
+									{
+									}
 								}
-								else
+								else	// ge.Target != "ContactHistory"
+								{
+									Model.SaveButtonVisibilityH = Visibility.Hidden;
+									return;
+								}
+							}
+							else	// (ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId == null
 							{
-								Model.SaveButtonVisibilityH = Visibility.Hidden;
-								return;
+								// There is no selected interaction
 							}
-							}
+						}
+						else	// ge.Context != Context.ToString(). This is event for another instance of SaveAttachmentsViewH. There 3 instances in total
+						{
 						}
 					}
 				}
@@ -216,6 +220,18 @@ namespace Adventus.Modules.Email
 				else
 					return false;
 			}) as DockPanel;
+		}
+
+		private SortableTabControl getTabControl()
+		{
+			return FindChild(Chv, child =>
+			{
+				var stc = child as SortableTabControl;
+				if (stc != null && stc.Name == "tabControlContactHistoryMultiViews")
+					return true;
+				else
+					return false;
+			}) as SortableTabControl;
 		}
 
 		/** \brief Executed once, at the view object destruction
@@ -239,11 +255,10 @@ namespace Adventus.Modules.Email
 		{  
 	        StreamWriter file = System.IO.File.AppendText("HistoryTabEvents.txt");
 			file.WriteLine(String.Format("{0,-20} | {1,-30} | {2,-35} | {3,-30}", DateTime.Now.ToString("HH.mm.ss.ffffff"), "Context: " + e.Context, "Action: " + (string)e.Action[0].Action, "Target: " + e.Target));
-			//file.WriteLine("Context: " + e.Context);
-			//file.WriteLine("Action: " + (string)e.Action[0].Action);
-			//file.WriteLine("Target: " + e.Target);
 			file.Close(); 
 		}
+
+		// Visual tree methods
 
 		public static T FindUpVisualTree<T>(DependencyObject initial) where T : DependencyObject
 		{
