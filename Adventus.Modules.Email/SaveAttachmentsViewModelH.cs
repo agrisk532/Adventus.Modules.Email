@@ -32,8 +32,7 @@ namespace Adventus.Modules.Email
 
         public SaveAttachmentsViewModelH()
         {
-			//SaveButtonVisibilityH = Visibility.Collapsed;
-			SaveButtonVisibilityH = Visibility.Visible;
+			SaveButtonVisibilityH = Visibility.Collapsed;
         }
 		
 		/** \brief send notifications to WPF

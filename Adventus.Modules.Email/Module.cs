@@ -81,7 +81,8 @@ namespace Adventus.Modules.Email
 		public void MyEventHandler(object eventObject)
 		{
 			GenericEvent ge = eventObject as GenericEvent;
-			if(!isButtonRegisteredInRegion && ge.Target == "ContactHistory")
+			//if(!isButtonRegisteredInRegion && ge.Target == "ContactHistory") // this is too late
+			if(!isButtonRegisteredInRegion && ge.SourceId == "ContactHandling")
 			{
 				try
 				{

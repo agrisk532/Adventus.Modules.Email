@@ -151,3 +151,10 @@ ContactHistoryViewModel.cs
         return;
       this.log.Error((object) "Error Call GetInteractionContent");
     }
+
+
+
+SaveAttachmentsViewH.xaml.cs
+
+		Context	"ContactMyHistory"	string
+
