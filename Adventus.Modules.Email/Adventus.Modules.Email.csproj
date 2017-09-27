@@ -139,6 +139,7 @@
     <Compile Include="SendAndSaveAttachmentsView.xaml.cs">
       <DependentUpon>SendAndSaveAttachmentsView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Util.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Adventus.Modules.Email.module-config">

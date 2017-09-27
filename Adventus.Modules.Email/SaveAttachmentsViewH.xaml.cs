@@ -21,9 +21,17 @@ namespace Adventus.Modules.Email
     {
         readonly IObjectContainer container;
         public object Context { get; set; }
-		public ContactHistoryView Chv {get;set;}
+		public ContactHistoryView Chv {get; set;}
 		//public ContactHistoryViewModel Chvm {get;set;}
 		//IInteractionItemViewModel SelectedItem {get;set;}
+		// Config server parameter for attached (user) data parameter name. It is used to enable/disable confidential email display
+		private const string CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_SECTION_NAME = "custom-email-content-save";
+		private const string CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_PARAMETER_NAME = "email-content-display-confidential-attached-data-parameter-name";
+		private const string CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_PARAMETER_VALUE = "email-content-display-confidential-attached-data-parameter-value";
+		private const string METHOD_NAME = "Adventus.Modules.Email.SaveAttachmentsViewH(): ";	
+
+		private string ConfidentialInfoParamName  {get; set;}
+		private string ConfidentialInfoParamValue {get; set;}
 
         public SaveAttachmentsViewH(IObjectContainer container, ISaveAttachmentsViewModelH model)
         {
@@ -45,6 +53,11 @@ namespace Adventus.Modules.Email
 			Context = (object) contextDictionary["ContactMode"];
 			container.Resolve<IViewEventManager>().Subscribe(IViewEventManager_EventHandler);
 			Chv = FindUpVisualTree<ContactHistoryView>(SaveFromHistoryButton);
+			ConfidentialInfoParamName = Util.GetConfigurationOption(CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_SECTION_NAME,
+					CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_PARAMETER_NAME, container, METHOD_NAME);
+			ConfidentialInfoParamValue = Util.GetConfigurationOption(CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_SECTION_NAME,
+					CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_PARAMETER_VALUE, container, METHOD_NAME);
+
 			//Chvm = (ContactHistoryViewModel)Chv.DataContext;
 			//Chv.PropertyChanged += Chv_PropertyChanged;
 			//Chvm.PropertyChanged += ContactHistoryViewModel_PropertyChanged;
@@ -148,8 +161,8 @@ namespace Adventus.Modules.Email
 												DockPanel dp = getDockPanelInteractionActions();
 												Model.SelectedInteractionId = ia.Id;    // selected interaction id
 												(Model as SaveAttachmentsViewModelBase).Dst = ic.DataSourceType;
-												string attachedData = (string)ia.AllAttributes["CategoryName"] ?? "Hi";
-												if(attachedData == "test")
+												string attachedData = (string)ia.AllAttributes[ConfidentialInfoParamName] ?? String.Empty;
+												if(attachedData != String.Empty && attachedData == ConfidentialInfoParamValue)
 												{
 													foreach (UserControl uc in Stc.Items)	// hide info in tab control
 													{

@@ -55,6 +55,7 @@ namespace Adventus.Modules.Email
 		private const string CONFIG_OPTION_NAME_OUTBOUND_EMAIL_SAVE_OPTION = "email-content-save-options-outbound"; // values: eml, attachments, all (eml+attachments)
 		// Config server parameter for subject truncation length
 		private const string CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH = "email-content-save-subject-length";
+
 		private const string DEFAULT_SUBJECT_LENGTH = "25";		// default value for option CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH
 		private const string METHOD_NAME = "Adventus.Modules.Email.SaveAttachmentsCommand(): ";
 
@@ -275,7 +276,7 @@ namespace Adventus.Modules.Email
 					if (enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In ||
 						enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Unknown)
 					{
-						opt = GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_INBOUND_EMAIL_SAVE_OPTION);
+						opt = Util.GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_INBOUND_EMAIL_SAVE_OPTION, container, METHOD_NAME);
 						if (opt == "eml")
 						{
 						// for inbound email binary content is available. We save it.
@@ -295,7 +296,7 @@ namespace Adventus.Modules.Email
 					else
 					if (enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
 					{
-						opt = GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_OUTBOUND_EMAIL_SAVE_OPTION);
+						opt = Util.GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_OUTBOUND_EMAIL_SAVE_OPTION, container, METHOD_NAME);
 						if (opt == "eml")
 						{
 						// for outbound emails binary content is not available. We must assemble it from agent created parts. This is not the email finally sent out by the business process.
@@ -351,7 +352,7 @@ namespace Adventus.Modules.Email
 		private int GetSubjectLength()
 		{
 			int sl;
-			string s = GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH) ?? DEFAULT_SUBJECT_LENGTH;
+			string s = Util.GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH, container, METHOD_NAME) ?? DEFAULT_SUBJECT_LENGTH;
             if (!Int32.TryParse(s, out sl))
 			{
 				ShowAndLogInfoMsg(String.Format("Configured max Email subject length cannot be converted to int: {0}. Using {1} instead.", s, DEFAULT_SUBJECT_LENGTH));
@@ -538,68 +539,13 @@ namespace Adventus.Modules.Email
 			return subj;
 		}
 
-		// read configuration options
-		// first read application level configuration option, if not set, read user level config option, if not set use default option
-		private string GetConfigurationOption(string section, string option)
-		{
-			string opt = String.Empty;
-
-			while(true)
-			{
-// user level configuration option
-				try
-				{
-					Genesyslab.Platform.ApplicationBlocks.ConfigurationObjectModel.CfgObjects.CfgPerson cp = container.Resolve<IAgent>().ConfPerson;  // <--- TEST THIS
-					Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
-					Genesyslab.Platform.Commons.Collections.KeyValueCollection sect = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc[section];
-					opt = (string)sect[option];
-					opt = Environment.ExpandEnvironmentVariables(opt);
-					break;
-				}
-		        catch (Exception ex)
-		        {
-					// fall through to the application options
-					log.Info(String.Format(METHOD_NAME + "User level configuration option {0} not defined. Trying to read application level option.", option));
-		        }
-
-// application level configuration option
-				try
-				{
-					//string name = configurationService.MyApplication.Name;
-					CfgApplication app = configurationService.RetrieveObject<CfgApplication>((ICfgQuery)new CfgApplicationQuery()
-					{
-						Name = configurationService.MyApplication.Name
-					});
-	
-					KeyValueCollection kvc = app.Options;
-					KeyValueCollection sect = (KeyValueCollection) kvc[section];
-					opt = (string)sect[option];
-					opt = Environment.ExpandEnvironmentVariables(opt);
-					break;
-				}
-				catch (Exception e)
-				{
-					opt = null;
-					log.Info(String.Format(METHOD_NAME + "Exception reading application level configuration option {0}", option));
-				}
-	
-				if(String.IsNullOrEmpty(opt))
-				{
-					opt = null;
-					log.Info(String.Format(METHOD_NAME + "Configuration option {0} not defined", option));
-				}
-				break;
-			}
-			return opt;
-		}
-
 		// The folder where files will be written. If not configured, it is agent's PC Desktop folder
 		private string GetOutputFolderName(string s)
 		{
 			string defaultDirectory = String.Empty;
 			try
 			{
-				defaultDirectory = GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_EMAIL_SAVE_PATH);
+				defaultDirectory = Util.GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_EMAIL_SAVE_PATH, container, METHOD_NAME);
 			}
 			catch (Exception e)
 			{
