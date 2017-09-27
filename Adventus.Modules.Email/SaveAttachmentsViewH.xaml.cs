@@ -161,28 +161,21 @@ namespace Adventus.Modules.Email
 												DockPanel dp = getDockPanelInteractionActions();
 												Model.SelectedInteractionId = ia.Id;    // selected interaction id
 												(Model as SaveAttachmentsViewModelBase).Dst = ic.DataSourceType;
-												string attachedData = (string)ia.AllAttributes[ConfidentialInfoParamName] ?? String.Empty;
-												if(attachedData != String.Empty && attachedData == ConfidentialInfoParamValue)
+												if(!String.IsNullOrEmpty(ConfidentialInfoParamName) && !String.IsNullOrEmpty(ConfidentialInfoParamValue))
 												{
-													foreach (UserControl uc in Stc.Items)	// hide info in tab control
+													string attachedData = (string)ia.AllAttributes[ConfidentialInfoParamName] ?? String.Empty;
+													if(attachedData != String.Empty && attachedData == ConfidentialInfoParamValue)
 													{
-														//if (uc is IStaticCaseDataView) { uc.Visibility = Visibility.Hidden;}
-														if (uc is INotepadView || uc is IContactDetailView)
-														{
-															uc.Visibility = Visibility.Hidden;
-														}
+														HideGraphicElements(Stc, dp);
 													}
-													dp.Visibility = Visibility.Hidden;	// hide dockPanelInteractionActions
-													Model.SaveButtonVisibilityH = Visibility.Hidden;	// hide SaveAttachmentsViewH button
+													else
+													{
+														ShowGraphicElements(Stc, dp);
+													}
 												}
 												else
 												{
-											        foreach(UserControl uc in Stc.Items)
-													{
-														uc.Visibility = Visibility.Visible;
-													}
-													dp.Visibility = Visibility.Visible;
-													Model.SaveButtonVisibilityH = Visibility.Visible;
+													ShowGraphicElements(Stc, dp);
 												}
 											}
 											else	// Stc == null
@@ -221,6 +214,30 @@ namespace Adventus.Modules.Email
 					MessageBox.Show(string.Format("Exception at processing event {0}", e.Message));
 				}
 			});
+		}
+
+		private void ShowGraphicElements(SortableTabControl Stc, DockPanel dp)
+		{
+			foreach (UserControl uc in Stc.Items)
+			{
+				uc.Visibility = Visibility.Visible;
+			}
+			dp.Visibility = Visibility.Visible;
+			Model.SaveButtonVisibilityH = Visibility.Visible;
+		}
+
+		private void HideGraphicElements(SortableTabControl Stc, DockPanel dp)
+		{
+			foreach (UserControl uc in Stc.Items)   // hide info in tab control
+			{
+				//if (uc is IStaticCaseDataView) { uc.Visibility = Visibility.Hidden;}
+				if (uc is INotepadView || uc is IContactDetailView)
+				{
+					uc.Visibility = Visibility.Hidden;
+				}
+			}
+			dp.Visibility = Visibility.Hidden;  // hide dockPanelInteractionActions
+			Model.SaveButtonVisibilityH = Visibility.Hidden;    // hide SaveAttachmentsViewH button
 		}
 
 		private DockPanel getDockPanelInteractionActions()

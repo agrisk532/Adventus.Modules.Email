@@ -20,6 +20,7 @@ namespace Adventus.Modules.Email
 			ILogger log = container.Resolve<ILogger>();
 			IConfigurationService configurationService = container.Resolve<IConfigurationService>();
 
+			if(section == null || option == null) return null;
 			while(true)
 			{
 // user level configuration option
@@ -29,13 +30,21 @@ namespace Adventus.Modules.Email
 					Genesyslab.Platform.Commons.Collections.KeyValueCollection kvc = cp.UserProperties;
 					Genesyslab.Platform.Commons.Collections.KeyValueCollection sect = (Genesyslab.Platform.Commons.Collections.KeyValueCollection) kvc[section];
 					opt = (string)sect[option];
-					opt = Environment.ExpandEnvironmentVariables(opt);
-					break;
+					if(!String.IsNullOrEmpty(opt))
+					{
+						opt = Environment.ExpandEnvironmentVariables(opt);
+						break;
+					}
+					else
+					{
+						// fall through to the application options
+						log.Info(String.Format(METHOD_NAME + "User level configuration option {0} not defined. Trying to read application level option.", option));
+					}
 				}
 		        catch (Exception ex)
 		        {
 					// fall through to the application options
-					log.Info(String.Format(METHOD_NAME + "User level configuration option {0} not defined. Trying to read application level option.", option));
+					log.Info(String.Format(METHOD_NAME + "Exception: User level configuration option {0} not defined. Trying to read application level option.", option));
 		        }
 
 // application level configuration option
@@ -50,13 +59,20 @@ namespace Adventus.Modules.Email
 					KeyValueCollection kvc = app.Options;
 					KeyValueCollection sect = (KeyValueCollection) kvc[section];
 					opt = (string)sect[option];
-					opt = Environment.ExpandEnvironmentVariables(opt);
-					break;
+					if(!String.IsNullOrEmpty(opt))
+					{
+						opt = Environment.ExpandEnvironmentVariables(opt);
+						break;
+					}
+					else
+					{
+						log.Info(String.Format(METHOD_NAME + "Application level configuration option {0} not defined.", option));
+					}
 				}
 				catch (Exception e)
 				{
 					opt = null;
-					log.Info(String.Format(METHOD_NAME + "Exception reading application level configuration option {0}", option));
+					log.Info(String.Format(METHOD_NAME + "Exception: reading application level configuration option {0}", option));
 				}
 	
 				if(String.IsNullOrEmpty(opt))
