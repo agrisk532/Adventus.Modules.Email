@@ -23,6 +23,7 @@ using Genesyslab.Enterprise.Model.ServiceModel;
 using Genesyslab.Enterprise.Services;
 using Genesyslab.Desktop.Modules.Core.Model.Agents;
 using MimeKit;
+using System.Net.Mail;
 
 namespace Adventus.Modules.Email
 {
@@ -244,8 +245,8 @@ namespace Adventus.Modules.Email
 
 					//string messageFrom = (interaction.GetAttachedData("FromAddress") ?? "").ToString();
 
-					string messageFrom = enterpriseEmailInteraction.From;
-					//string messageFrom = "\"ERGO kahjukäsitlus\" <kahju@ergo.ee>";
+					//string messageFrom = enterpriseEmailInteraction.From;
+					string messageFrom = "\"ERGO kahjukäsitlus\" <kahju@ergo.ee>";
 					string messageTo;
 					try
 					{
@@ -411,14 +412,32 @@ namespace Adventus.Modules.Email
 		// attachments must be saved on the file system before calling this method. Use method SaveAttachments(ucsConnection, attachmentList)
 		private void AssembleAndSaveEMLBinaryContent(string messageFrom, string messageTo, string messageText, string structuredMessageText, string path)
 		{
-			var message = new MimeMessage();
-			// get the name and address
+			MailAddress from, to;
 
-			string name, addr;
-			SplitAddress(messageFrom, out name, out addr);
-			message.From.Add(new MailboxAddress(name, addr));
-			SplitAddress(messageTo, out name, out addr);
-			message.To.Add(new MailboxAddress(name, addr));
+			try
+			{
+				from = new MailAddress(messageFrom);
+			}
+			catch(Exception e)
+			{
+				ShowAndLogErrorMsg("Invalid format Email From address : '{0}'");
+				from  = new MailAddress("unknown@address.com"," Unknown address");
+			}
+			try
+			{
+				to = new MailAddress(messageTo);
+			}
+			catch(Exception e)
+			{
+				ShowAndLogErrorMsg("Invalid format Email To address : '{0}'");
+				to  = new MailAddress("unknown@address.com"," Unknown address");
+			}
+
+			var message = new MimeMessage();
+			//SplitAddress(messageFrom, out name, out addr);
+			message.From.Add(new MailboxAddress(from.DisplayName, from.Address));
+			//SplitAddress(messageTo, out name, out addr);
+			message.To.Add(new MailboxAddress(to.DisplayName, to.Address));
 			HeaderList l = message.Headers;
 			string s = enterpriseEmailInteraction.Subject ?? "";
 			//l["Subject"] = @"=?utf-8?Q?" + Encoder.EncodeQuotedPrintable(s) + @"?=";
