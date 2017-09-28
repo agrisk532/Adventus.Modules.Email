@@ -245,12 +245,14 @@ namespace Adventus.Modules.Email
 
 					//string messageFrom = (interaction.GetAttachedData("FromAddress") ?? "").ToString();
 
-					//string messageFrom = enterpriseEmailInteraction.From;
-					string messageFrom = "\"ERGO kahjukäsitlus\" <kahju@ergo.ee>";
-					string messageTo;
+					string messageFrom = enterpriseEmailInteraction.From;
+					//string messageFrom = "\"ERGO kahjukäsitlus\" <kahju@ergo.ee>";
+					string[] messageTo = null;
+					string[] messageCc = null;
+					string[] messageBcc = null;
 					try
 					{
-						messageTo = enterpriseEmailInteraction.To[0] ?? "";
+						messageTo = enterpriseEmailInteraction.To;
 					}
 					catch (Exception e)
 					{
@@ -258,12 +260,16 @@ namespace Adventus.Modules.Email
 						CloseUCSConnection(ucsConnection);
 						return false;	 // continue execution of the command chain
 					}
-					if (String.IsNullOrEmpty(messageTo))
+					if (messageTo == null || messageTo.Length == 0)
 					{
 						MessageBox.Show("Please enter message recipient", "Attention");
 						CloseUCSConnection(ucsConnection);
 						return false;	// continue execution of the command chain
 					}
+
+					messageCc = enterpriseEmailInteraction.Cc;
+					messageBcc = enterpriseEmailInteraction.Bcc;
+
 					string messageDate = enterpriseEmailInteraction.StartDate.ToString("dd.MM.yyyy HH:mm");
 					string messageText = enterpriseEmailInteraction.MessageText;    /**< without html formatting */
 					string structuredMessageText = enterpriseEmailInteraction.StructuredText;   /**< with html formatting */
@@ -281,7 +287,7 @@ namespace Adventus.Modules.Email
 						if (opt == "eml")
 						{
 						// for inbound email binary content is available. We save it.
-							SaveBinaryContent(messageFrom, messageTo, messageText, structuredMessageText, emlFilePath, interactionContent);
+							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, interactionContent);
 						}
 						else
 						if (opt == "attachments")
@@ -291,7 +297,7 @@ namespace Adventus.Modules.Email
 						else
 						{
 							SaveAttachments(ucsConnection, attachmentList);
-							SaveBinaryContent(messageFrom, messageTo, messageText, structuredMessageText, emlFilePath, interactionContent);
+							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, interactionContent);
 						}
 					}
 					else
@@ -303,7 +309,7 @@ namespace Adventus.Modules.Email
 						// for outbound emails binary content is not available. We must assemble it from agent created parts. This is not the email finally sent out by the business process.
 						// for this option == eml, store attachments, assemble message including attachments, delete attachments
 							SaveAttachments(ucsConnection, attachmentList);
-							SaveBinaryContent(messageFrom, messageTo, messageText, structuredMessageText, emlFilePath, interactionContent);
+							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, interactionContent);
 							DeleteAttachments();
 						}
 						else
@@ -314,7 +320,7 @@ namespace Adventus.Modules.Email
 						else
 						{
 							SaveAttachments(ucsConnection, attachmentList);
-							SaveBinaryContent(messageFrom, messageTo, messageText, structuredMessageText, emlFilePath, interactionContent);
+							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, interactionContent);
 						}
 					}
 					else
@@ -394,7 +400,7 @@ namespace Adventus.Modules.Email
 			}
 		}
 
-		private void SaveBinaryContent(string messageFrom, string messageTo, string messageText, string structuredMessageText, string emlFilePath, InteractionContent interactionContent)
+		private void SaveBinaryContent(string messageFrom, string[] messageTo, string[] messageCc, string[] messageBcc, string messageText, string structuredMessageText, string emlFilePath, InteractionContent interactionContent)
 		{
 			// Binary content available. That is for incoming emails. They already have traveled the Business Process (URS).
 			if (interactionContent.Content != null)
@@ -405,39 +411,31 @@ namespace Adventus.Modules.Email
 			// Here we save email created by agent.
 			else
 			{
-				AssembleAndSaveEMLBinaryContent(messageFrom, messageTo, messageText, structuredMessageText, emlFilePath);
+				AssembleAndSaveEMLBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath);
 			}
 		}
 
 		// attachments must be saved on the file system before calling this method. Use method SaveAttachments(ucsConnection, attachmentList)
-		private void AssembleAndSaveEMLBinaryContent(string messageFrom, string messageTo, string messageText, string structuredMessageText, string path)
+		private void AssembleAndSaveEMLBinaryContent(string messageFrom, string[] messageTo, string[] messageCc, string[] messageBcc, string messageText, string structuredMessageText, string path)
 		{
-			MailAddress from, to;
+			MailAddress from = null;
 
+			var message = new MimeMessage();
 			try
 			{
 				from = new MailAddress(messageFrom);
 			}
-			catch(Exception e)
+			catch (Exception e)
 			{
-				ShowAndLogErrorMsg("Invalid format Email From address : '{0}'");
-				from  = new MailAddress("unknown@address.com"," Unknown address");
+				ShowAndLogErrorMsg("Invalid format email From address : '{0}'");
+				from = new MailAddress("unknownFrom@address.com", " Unknown From address");
 			}
-			try
-			{
-				to = new MailAddress(messageTo);
-			}
-			catch(Exception e)
-			{
-				ShowAndLogErrorMsg("Invalid format Email To address : '{0}'");
-				to  = new MailAddress("unknown@address.com"," Unknown address");
-			}
-
-			var message = new MimeMessage();
-			//SplitAddress(messageFrom, out name, out addr);
 			message.From.Add(new MailboxAddress(from.DisplayName, from.Address));
-			//SplitAddress(messageTo, out name, out addr);
-			message.To.Add(new MailboxAddress(to.DisplayName, to.Address));
+
+			AddAddresses(messageTo, message, "To");
+			AddAddresses(messageCc, message, "Cc");
+			AddAddresses(messageBcc, message, "Bcc");
+
 			HeaderList l = message.Headers;
 			string s = enterpriseEmailInteraction.Subject ?? "";
 			//l["Subject"] = @"=?utf-8?Q?" + Encoder.EncodeQuotedPrintable(s) + @"?=";
@@ -479,29 +477,37 @@ namespace Adventus.Modules.Email
 
 		}
 
-		private static void SplitAddress(string address, out string name, out string addr)
+		private void AddAddresses(string[] address, MimeMessage message, string type)
 		{
-			int start = address.IndexOf("\"") + 1;
-			int end;
-			if(start != 0)
+			InternetAddressList ial = null;
+			switch(type)
 			{
-				end = address.IndexOf("\"", start);
-				name = address.Substring(start, end - start);
-			}
-			else
-			{
-				name = String.Empty;
+				case "To":
+					ial = message.To;
+					break;
+				case "Cc":
+					ial = message.Cc;
+					break;
+				case "Bcc":
+					ial = message.Bcc;
+					break;
+				default:
+					break;
 			}
 
-			start = address.IndexOf("<") + 1;
-			if(start != 0)
+			MailAddress ma = null;
+			foreach (string str in address)
 			{
-				end = address.IndexOf(">", start);
-				addr = address.Substring(start, end - start);
-			}
-			else
-			{
-				addr = address;
+				try
+				{
+					ma = new MailAddress(str);
+				}
+				catch (Exception e)
+				{
+					ShowAndLogErrorMsg("Invalid format email " + type + " address : '{0}'");
+					continue;
+				}
+				ial.Add(new MailboxAddress(ma.DisplayName, ma.Address));
 			}
 		}
 
