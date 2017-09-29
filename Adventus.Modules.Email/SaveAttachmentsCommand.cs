@@ -280,8 +280,11 @@ namespace Adventus.Modules.Email
 
 					// read options from config server
 					string opt = String.Empty;
-					if (enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In ||
-						enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Unknown)
+					//if (enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In ||
+					//	enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Unknown)
+					//{
+					string direction = enterpriseEmailInteraction.GetAttributeInteraction("InteractionType") as string;
+					if(direction != null && direction == "Inbound")
 					{
 						opt = Util.GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_INBOUND_EMAIL_SAVE_OPTION, container, METHOD_NAME);
 						if (opt == "eml")
@@ -301,7 +304,8 @@ namespace Adventus.Modules.Email
 						}
 					}
 					else
-					if (enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
+					//if (enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Out)
+					if(direction != null && direction == "Outbound")
 					{
 						opt = Util.GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_OUTBOUND_EMAIL_SAVE_OPTION, container, METHOD_NAME);
 						if (opt == "eml")
@@ -419,19 +423,26 @@ namespace Adventus.Modules.Email
 		private void AssembleAndSaveEMLBinaryContent(string messageFrom, string[] messageTo, string[] messageCc, string[] messageBcc, string messageText, string structuredMessageText, string path)
 		{
 			MailAddress from = null;
-
 			var message = new MimeMessage();
-			try
+			if(messageFrom != null)
 			{
-				from = new MailAddress(messageFrom);
+				try
+				{
+					from = new MailAddress(messageFrom);
+				}
+				catch (Exception e)
+				{
+					ShowAndLogErrorMsg(String.Format("Invalid format email From address : '{0}'", messageFrom));
+					from = new MailAddress("unknown@address.com", " Unknown From address");
+				}
 			}
-			catch (Exception e)
+			else
 			{
-				ShowAndLogErrorMsg("Invalid format email From address : '{0}'");
-				from = new MailAddress("unknownFrom@address.com", " Unknown From address");
+				ShowAndLogErrorMsg("Email From address not specified. Using unknown@address.com");
+				from = new MailAddress("unknown@address.com", " Unknown From address");
 			}
-			message.From.Add(new MailboxAddress(from.DisplayName, from.Address));
 
+			message.From.Add(new MailboxAddress(from.DisplayName, from.Address));
 			AddAddresses(messageTo, message, "To");
 			AddAddresses(messageCc, message, "Cc");
 			AddAddresses(messageBcc, message, "Bcc");
@@ -479,35 +490,38 @@ namespace Adventus.Modules.Email
 
 		private void AddAddresses(string[] address, MimeMessage message, string type)
 		{
-			InternetAddressList ial = null;
-			switch(type)
+			if(address != null && address.Length != 0)
 			{
-				case "To":
-					ial = message.To;
-					break;
-				case "Cc":
-					ial = message.Cc;
-					break;
-				case "Bcc":
-					ial = message.Bcc;
-					break;
-				default:
-					break;
-			}
-
-			MailAddress ma = null;
-			foreach (string str in address)
-			{
-				try
+				InternetAddressList ial = null;
+				switch(type)
 				{
-					ma = new MailAddress(str);
+					case "To":
+						ial = message.To;
+						break;
+					case "Cc":
+						ial = message.Cc;
+						break;
+					case "Bcc":
+						ial = message.Bcc;
+						break;
+					default:
+						break;
 				}
-				catch (Exception e)
+	
+				MailAddress ma = null;
+				foreach (string str in address)
 				{
-					ShowAndLogErrorMsg("Invalid format email " + type + " address : '{0}'");
-					continue;
+					try
+					{
+						ma = new MailAddress(str);
+					}
+					catch (Exception e)
+					{
+						ShowAndLogErrorMsg("Invalid format email " + type + " address : '{0}'");
+						continue;
+					}
+					ial.Add(new MailboxAddress(ma.DisplayName, ma.Address));
 				}
-				ial.Add(new MailboxAddress(ma.DisplayName, ma.Address));
 			}
 		}
 

@@ -21,6 +21,8 @@ namespace Adventus.Modules.Email
     {
         readonly IObjectContainer container;
         public object Context { get; set; }
+		HashSet<string> RelevantContexts {get;set; }
+
 		public ContactHistoryView Chv {get; set;}
 		//public ContactHistoryViewModel Chvm {get;set;}
 		//IInteractionItemViewModel SelectedItem {get;set;}
@@ -50,17 +52,29 @@ namespace Adventus.Modules.Email
         public void Create()
         {
 			IDictionary<string, object> contextDictionary = Context as IDictionary<string, object>;
-			Context = (object) contextDictionary["ContactMode"];
+			if(contextDictionary != null && contextDictionary.ContainsKey("ContactMode"))
+			{
+				Context = (object)contextDictionary["ContactMode"];
+			}
+			else
+			{
+				// prevent this component's functionality in other WPF ErrorRegions except in ContactMode (ContactMyHistory, ContactMain, InteractionSearch) tabs 
+				// interesting: opening an interaction from workbin triggers this code. No idea why.
+				Context = (object) "dummy";	
+				return;
+			}
+
 			container.Resolve<IViewEventManager>().Subscribe(IViewEventManager_EventHandler);
 			Chv = FindUpVisualTree<ContactHistoryView>(SaveFromHistoryButton);
-			ConfidentialInfoParamName = Util.GetConfigurationOption(CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_SECTION_NAME,
-					CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_PARAMETER_NAME, container, METHOD_NAME);
-			ConfidentialInfoParamValue = Util.GetConfigurationOption(CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_SECTION_NAME,
-					CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_PARAMETER_VALUE, container, METHOD_NAME);
+			//ConfidentialInfoParamName = Util.GetConfigurationOption(CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_SECTION_NAME,
+			//		CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_PARAMETER_NAME, container, METHOD_NAME);
+			//ConfidentialInfoParamValue = Util.GetConfigurationOption(CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_SECTION_NAME,
+			//		CONFIG_OPTION_CONFIDENTIAL_EMAIL_ATTACHED_DATA_PARAMETER_VALUE, container, METHOD_NAME);
 
 			//Chvm = (ContactHistoryViewModel)Chv.DataContext;
 			//Chv.PropertyChanged += Chv_PropertyChanged;
 			//Chvm.PropertyChanged += ContactHistoryViewModel_PropertyChanged;
+			RelevantContexts = new HashSet<string> {"ContactMyHistory","ContactMain","InteractionSearch"};
 		}
 
 		//private void ContactHistoryViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -135,6 +149,8 @@ namespace Adventus.Modules.Email
 					
 					//WriteXML(ge);
 
+						if(!RelevantContexts.Contains(ge.Context)) return;
+
 						if(ge.Context == Context.ToString())	// event for corresponding instance of SaveAttachmentsViewH. In total there are 3 instances.
 						{
 							string s = ((ContactHistoryViewModel)Chv.DataContext).SelectedInteractionId;
@@ -155,33 +171,34 @@ namespace Adventus.Modules.Email
 										if (ia.MediaTypeId == "email")
 										{
 											//SortableTabControl Stc = GetChildOfType<SortableTabControl>(Chv);
-											SortableTabControl Stc = getTabControl();
-											if(Stc != null)
-											{
-												DockPanel dp = getDockPanelInteractionActions();
+											//SortableTabControl Stc = getTabControl();
+											//if(Stc != null)
+											//{
+												//DockPanel dp = getDockPanelInteractionActions();
 												Model.SelectedInteractionId = ia.Id;    // selected interaction id
 												(Model as SaveAttachmentsViewModelBase).Dst = ic.DataSourceType;
-												if(!String.IsNullOrEmpty(ConfidentialInfoParamName) && !String.IsNullOrEmpty(ConfidentialInfoParamValue))
-												{
-													string attachedData = (string)ia.AllAttributes[ConfidentialInfoParamName] ?? String.Empty;
-													if(attachedData != String.Empty && attachedData == ConfidentialInfoParamValue)
-													{
-														HideGraphicElements(Stc, dp);
-													}
-													else
-													{
-														ShowGraphicElements(Stc, dp);
-													}
-												}
-												else
-												{
-													ShowGraphicElements(Stc, dp);
-												}
-											}
-											else	// Stc == null
-											{
-												Model.SaveButtonVisibilityH = Visibility.Hidden;
-											}
+												//if(!String.IsNullOrEmpty(ConfidentialInfoParamName) && !String.IsNullOrEmpty(ConfidentialInfoParamValue))
+												//{
+												//	string attachedData = (string)ia.AllAttributes[ConfidentialInfoParamName] ?? String.Empty;
+												//	if(attachedData != String.Empty && attachedData == ConfidentialInfoParamValue)
+												//	{
+												//		HideGraphicElements(Stc, dp);
+												//	}
+												//	else
+												//	{
+												//		ShowGraphicElements(Stc, dp);
+												//	}
+												//}
+												//else
+												//{
+												//	ShowGraphicElements(Stc, dp);
+												//}
+											//}
+											//else	// Stc == null
+											//{
+											//	Model.SaveButtonVisibilityH = Visibility.Hidden;
+											//}
+											Model.SaveButtonVisibilityH = Visibility.Visible;
 										}
 										else	// ia.MediaTypeId != "email"
 										{
@@ -268,7 +285,10 @@ namespace Adventus.Modules.Email
 		 */
 		public void Destroy()
         {
-			container.Resolve<IViewEventManager>().Unsubscribe(IViewEventManager_EventHandler);
+			if(Context.ToString() != "dummy")
+			{
+				container.Resolve<IViewEventManager>().Unsubscribe(IViewEventManager_EventHandler);
+			}
         }
 
 /** \brief Event handler
