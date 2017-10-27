@@ -182,8 +182,9 @@ namespace Adventus.Modules.Email
 						}
 						catch (Exception exception)
 						{
-							ShowAndLogErrorMsg(String.Format("Exception creating folder at {0}: {1}.", OutputFolderName, exception.Message));
-							OutputFolderName = SetDesktopOutputFolder() + "\\" + SubjectTrimmed;
+                            string OutputFolderNameOld = OutputFolderName;
+                            OutputFolderName = SetDesktopOutputFolder() + "\\" + SubjectTrimmed;
+                            ShowAndLogErrorMsg(String.Format("Exception creating folder at {0}: {1}. Using folder {2}", OutputFolderNameOld, exception.Message, OutputFolderName));
 						}
 					}
 
@@ -232,6 +233,7 @@ namespace Adventus.Modules.Email
 					request.IncludeAttachments = true;
 					request.DataSource = new NullableDataSourceType(Model.Dst);
 
+                    GC.Collect(); // to avoid outofmemory exceptions
 					EventGetInteractionContent eventGetIxnContent = (EventGetInteractionContent)ucsConnection.Request(request);
 
 					if (eventGetIxnContent == null)
