@@ -24,6 +24,9 @@ using Genesyslab.Enterprise.Services;
 using Genesyslab.Desktop.Modules.Core.Model.Agents;
 using MimeKit;
 using System.Net.Mail;
+using Genesyslab.Desktop.Modules.Windows.Views.Common.AttachmentView;
+using Genesyslab.Enterprise.Model.Contact;
+using Genesyslab.Desktop.Modules.Windows;
 
 namespace Adventus.Modules.Email
 {
@@ -40,9 +43,10 @@ namespace Adventus.Modules.Email
 		readonly IConfigurationService configurationService;
 		public SaveAttachmentsViewModelBase Model;
 		public Genesyslab.Enterprise.Model.Interaction.IEmailInteraction enterpriseEmailInteraction;
-		
-		// for calls from ContactDirectory History tab
-		public bool isCalledFromHistory;
+        public Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email.IInteractionEmail interactionEmail;
+
+        // for calls from ContactDirectory History tab
+        public bool isCalledFromHistory;
 
 		public Genesyslab.Enterprise.Services.IContactService service;
 		public Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService service2;
@@ -67,7 +71,8 @@ namespace Adventus.Modules.Email
 			this.configurationService = container.Resolve<IConfigurationService>();
 			this.log = logger;
 			log.Info(METHOD_NAME + "entered");
-			OutputFolderName = String.Empty;
+
+            OutputFolderName = String.Empty;
 			isCalledFromHistory = false; // called from active online interaction
 			service = container.Resolve<IEnterpriseServiceProvider>().Resolve<IContactService>("contactService");
 			service2 = container.Resolve<Genesyslab.Desktop.Modules.Core.SDK.Contact.IContactService>();
@@ -89,7 +94,7 @@ namespace Adventus.Modules.Email
             }
             else
             {
-				try
+                try
 				{
 					if(parameters.ContainsKey("Model"))	
 					{
@@ -112,9 +117,10 @@ namespace Adventus.Modules.Email
 			                    return true;	// stop execution of command chain
 			                }
 
-							enterpriseEmailInteraction = interactionEmail.EntrepriseEmailInteractionCurrent;
-							Model = m;
-							isCalledFromHistory = false;
+                            //enterpriseEmailInteraction = interactionEmail.EntrepriseEmailInteractionCurrent;
+                            enterpriseEmailInteraction = service.GetInteractionContent(channel, interaction.EntrepriseInteractionCurrent.Id, Genesyslab.Enterprise.Services.DataSourceType.Main) as Genesyslab.Enterprise.Model.Interaction.IEmailInteraction;
+                            Model = m;
+							//isCalledFromHistory = false;
 						}
 						else
 						if(mH != null)	// ISaveAttachmentsViewModelH used (interaction from history)
@@ -135,14 +141,18 @@ namespace Adventus.Modules.Email
 						return true;
 					}
 				}
+                catch(IOException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
 				catch(Exception e)
 				{
 					ShowAndLogErrorMsg("Type error. Email saving terminated.");
 					return true;
 				}
 
-					// get subjectLength
-					subjectLength = GetSubjectLength();
+                // get subjectLength
+                subjectLength = GetSubjectLength();
 
 					// Subfolder name for the output folder
 					string SubjectTrimmed = GetSubjectTrimmed();
@@ -204,50 +214,116 @@ namespace Adventus.Modules.Email
 						return true;	// Cannot parse server port. Stop execution of the command chain.
 					}
 
-					// connection to UCS contact server
-					UniversalContactServerProtocol ucsConnection;
-					//ucsConnection = new UniversalContactServerProtocol(new Endpoint("UniversalContactServer", "ling.lauteri.inter", 5130));
-					//ucsConnection = new UniversalContactServerProtocol(new Endpoint("eS_UniversalContactServer", "genesys1", 6120));
+                    // check if attachments are already in tmp folder.
+                    // If yes, copy them from tmp to the destination folder. If not, copy them from UCS.
+    
+                    ICollection<IAttachment> attachments = new List<IAttachment>();
+                    attachments = service.GetAttachments(enterpriseEmailInteraction);
+                    string str = this.container.Resolve<IAttachmentFilesHelper>().TemporaryFolder;
+    
+                    ICollection<AttachmentWrapper> aws = new List<AttachmentWrapper>();
+                    foreach (IAttachment attachment in attachments)
+                    {
+                        AttachmentWrapper aw = new AttachmentWrapper(attachment, false);
+                        string src = Path.Combine(str, attachment.Id, attachment.Name);
+                        if (File.Exists(src))
+                        {
+                            string dest = Path.Combine(OutputFolderName, attachment.Name);
+                            try
+                            {
+                                File.Copy(src, dest, true);
+                            }
+                            catch(Exception ex)
+                            {
+                                ShowAndLogErrorMsg(String.Format("Could not copy attachment file {0} to {1}. File skipped. {2}", src, dest, ex.Message));
+                                continue;
+                            }
+                            aw.IsCopied = true;
+                            Model.EmailPartsPath.Add(dest);
+                        }
+                        aws.Add(aw);
+                    }
 
-					ucsConnection = new UniversalContactServerProtocol(new Endpoint(appName, host, port));
+                    foreach(AttachmentWrapper aw in aws)
+                    {
+                        if (!aw.IsCopied)
+                        {
+                            if ((channel != null) && (channel.State == ChannelState.Opened))
+                            {
+                                IAttachment attachment = service.GetAttachment(channel, aw.Attachment.Id, (Genesyslab.Enterprise.Services.DataSourceType)Model.Dst, WindowsOptions.Default.Emailattachmentdownloadtimeout);
+                                if (attachment != null)
+                                {
+                                    string dest = Path.Combine(OutputFolderName, attachment.Name);
+                                    try
+                                    {
+                                        FileStream stream = new FileInfo(dest).Open(FileMode.Create, FileAccess.Write);
+                                        stream.Write(attachment.Content, 0, attachment.Size.Value);
+                                        stream.Close();
+                                    }
+                                    catch(Exception ex)
+                                    {
+                                        MessageBox.Show("Exception downloading attached file {0}", attachment.Name);
+                                        continue;
+                                    }
+                                    Model.EmailPartsPath.Add(dest);
+                                }
+                                else
+                                {
+                                    MessageBox.Show("Can't download attached file {0}", attachment.Name);
+                                }
+                            }
+                        }
+                    }
 
-					ucsConnection.Opened += new EventHandler(ucsConnection_Opened);
-					ucsConnection.Error += new EventHandler(ucsConnection_Error);
-					ucsConnection.Closed += new EventHandler(ucsConnection_Closed);
-					try
-					{
-						ucsConnection.Open();
-					}
-					catch (Exception e)
-					{
-						ShowAndLogErrorMsg(String.Format("Connection to UniversalContactServer failed. Email saving terminated: {0}", e.ToString()));
-						ucsConnection.Opened -= new EventHandler(ucsConnection_Opened);
-						ucsConnection.Error -= new EventHandler(ucsConnection_Error);
-						ucsConnection.Closed -= new EventHandler(ucsConnection_Closed);
-						return true;    // stop execution of command chain
-					}
+                // connection to UCS contact server
+                //UniversalContactServerProtocol ucsConnection;
+                //ucsConnection = new UniversalContactServerProtocol(new Endpoint("UniversalContactServer", "ling.lauteri.inter", 5130));
+                //ucsConnection = new UniversalContactServerProtocol(new Endpoint("eS_UniversalContactServer", "genesys1", 6120));
 
-					RequestGetInteractionContent request = new RequestGetInteractionContent();
-					request.InteractionId = enterpriseEmailInteraction.Id;
-					request.IncludeBinaryContent = true;
-					request.IncludeAttachments = true;
-					request.DataSource = new NullableDataSourceType(Model.Dst);
+                //ucsConnection = new UniversalContactServerProtocol(new Endpoint(appName, host, port));
 
-                    GC.Collect(); // to avoid outofmemory exceptions
-					EventGetInteractionContent eventGetIxnContent = (EventGetInteractionContent)ucsConnection.Request(request);
+                //ucsConnection.Opened += new EventHandler(ucsConnection_Opened);
+                //ucsConnection.Error += new EventHandler(ucsConnection_Error);
+                //ucsConnection.Closed += new EventHandler(ucsConnection_Closed);
+                //try
+                //{
+                //	ucsConnection.Open();
+                //}
+                //catch (Exception e)
+                //{
+                //	ShowAndLogErrorMsg(String.Format("Connection to UniversalContactServer failed. Email saving terminated: {0}", e.ToString()));
+                //	ucsConnection.Opened -= new EventHandler(ucsConnection_Opened);
+                //	ucsConnection.Error -= new EventHandler(ucsConnection_Error);
+                //	ucsConnection.Closed -= new EventHandler(ucsConnection_Closed);
+                //	return true;    // stop execution of command chain
+                //}
 
-					if (eventGetIxnContent == null)
-					{
-						ShowAndLogErrorMsg("Request to UniversalContactServer failed. Email saving terminated.");
-						CloseUCSConnection(ucsConnection);
-						return true;    // stop execution of the command chain
-					}
+                //RequestGetInteractionContent request = new RequestGetInteractionContent();
+                //request.InteractionId = enterpriseEmailInteraction.Id;
+                //request.IncludeBinaryContent = true;
+                //request.IncludeAttachments = true;
+                //request.DataSource = new NullableDataSourceType(Model.Dst);
 
-					// create and save message
+                //GC.Collect(); // to avoid outofmemory exceptions
+                //EventGetInteractionContent eventGetIxnContent = (EventGetInteractionContent)ucsConnection.Request(request);
 
-					//string messageFrom = (interaction.GetAttachedData("FromAddress") ?? "").ToString();
+                //if (eventGetIxnContent == null)
+                //{
+                //	ShowAndLogErrorMsg("Request to UniversalContactServer failed. Email saving terminated.");
+                //	CloseUCSConnection(ucsConnection);
+                //	return true;    // stop execution of the command chain
+                //}
 
-					string messageFrom = enterpriseEmailInteraction.From;
+                //AttachmentList attachmentList = eventGetIxnContent.Attachments;
+                //InteractionContent interactionContent = eventGetIxnContent.InteractionContent;
+
+                InteractionContent interactionContent = null; // to select correct execution path in SaveBinaryContent()
+
+                // create and save message
+
+                //string messageFrom = (interaction.GetAttachedData("FromAddress") ?? "").ToString();
+
+                string messageFrom = enterpriseEmailInteraction.From;
 					//string messageFrom = "\"ERGO kahjukäsitlus\" <kahju@ergo.ee>";
 					string[] messageTo = null;
 					string[] messageCc = null;
@@ -259,14 +335,14 @@ namespace Adventus.Modules.Email
 					catch (Exception e)
 					{
 						MessageBox.Show("Please enter message recipient", "Attention");
-						CloseUCSConnection(ucsConnection);
+						//CloseUCSConnection(ucsConnection);  // <- TODO
 						return false;	 // continue execution of the command chain
 					}
 					if (messageTo == null || messageTo.Length == 0)
 					{
 						MessageBox.Show("Please enter message recipient", "Attention");
-						CloseUCSConnection(ucsConnection);
-						return false;	// continue execution of the command chain
+						//CloseUCSConnection(ucsConnection);  // <- TODO
+                        return false;	// continue execution of the command chain
 					}
 
 					messageCc = enterpriseEmailInteraction.Cc;
@@ -277,10 +353,7 @@ namespace Adventus.Modules.Email
 					string structuredMessageText = enterpriseEmailInteraction.StructuredText;   /**< with html formatting */
 					string emlFilePath = Path.Combine(OutputFolderName, SubjectTrimmed + ".eml");
 
-					AttachmentList attachmentList = eventGetIxnContent.Attachments;
-					InteractionContent interactionContent = eventGetIxnContent.InteractionContent;
-
-					// read options from config server
+    				// read options from config server
 					string opt = String.Empty;
 					//if (enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.In ||
 					//	enterpriseEmailInteraction.IdType.Direction == Genesyslab.Enterprise.Model.Protocol.MediaDirectionType.Unknown)
@@ -293,15 +366,16 @@ namespace Adventus.Modules.Email
 						{
 						// for inbound email binary content is available. We save it.
 							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, interactionContent);
-						}
+                            DeleteAttachments();
+                        }
 						else
 						if (opt == "attachments")
 						{
-							SaveAttachments(ucsConnection, attachmentList);
+							//SaveAttachments(ucsConnection, attachmentList);
 						}
 						else
 						{
-							SaveAttachments(ucsConnection, attachmentList);
+							//SaveAttachments(ucsConnection, attachmentList);
 							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, interactionContent);
 						}
 					}
@@ -314,29 +388,29 @@ namespace Adventus.Modules.Email
 						{
 						// for outbound emails binary content is not available. We must assemble it from agent created parts. This is not the email finally sent out by the business process.
 						// for this option == eml, store attachments, assemble message including attachments, delete attachments
-							SaveAttachments(ucsConnection, attachmentList);
+							//SaveAttachments(ucsConnection, attachmentList);
 							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, interactionContent);
 							DeleteAttachments();
 						}
 						else
 						if (opt == "attachments")
 						{
-							SaveAttachments(ucsConnection, attachmentList);
+							//SaveAttachments(ucsConnection, attachmentList);
 						}
 						else
 						{
-							SaveAttachments(ucsConnection, attachmentList);
+							//SaveAttachments(ucsConnection, attachmentList);
 							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, interactionContent);
 						}
 					}
 					else
 					{
 						ShowAndLogErrorMsg("I don't know what to do. It is neither inbound nor outbound email. Email saving terminated.");
-						CloseUCSConnection(ucsConnection);
+						//CloseUCSConnection(ucsConnection);
 						return true;	// stop execution of command chain
 					}
 
-					CloseUCSConnection(ucsConnection);
+					//CloseUCSConnection(ucsConnection);
 
 					// show info in a messagebox
 					Model.EmailPartsInfoStored = true;
@@ -409,7 +483,7 @@ namespace Adventus.Modules.Email
 		private void SaveBinaryContent(string messageFrom, string[] messageTo, string[] messageCc, string[] messageBcc, string messageText, string structuredMessageText, string emlFilePath, InteractionContent interactionContent)
 		{
 			// Binary content available. That is for incoming emails. They already have traveled the Business Process (URS).
-			if (interactionContent.Content != null)
+			if (interactionContent != null && interactionContent.Content != null)
 			{
 				SaveEMLBinaryContent(interactionContent, emlFilePath);
 			}
@@ -692,4 +766,15 @@ namespace Adventus.Modules.Email
 			log.Info(METHOD_NAME + s);
 		}
 	}
+
+    class AttachmentWrapper
+    {
+        public IAttachment Attachment { get; set; }
+        public bool IsCopied { get; set; }  // is copied from tmp folder to the output folder or not
+        public AttachmentWrapper( IAttachment attachment, bool copied)
+        {
+            Attachment = attachment;
+            IsCopied = copied;
+        }
+    }
 }
