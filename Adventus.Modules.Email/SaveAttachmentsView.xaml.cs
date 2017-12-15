@@ -5,7 +5,6 @@ using Genesyslab.Desktop.Infrastructure.Commands;
 using Genesyslab.Desktop.Infrastructure.DependencyInjection;
 using Genesyslab.Desktop.Modules.Windows.Interactions;
 using Genesyslab.Desktop.Modules.Core.Model.Interactions;
-using Genesyslab.Desktop.Infrastructure;
 
 namespace Adventus.Modules.Email
 {
