@@ -43,7 +43,7 @@ namespace Adventus.Modules.Email
 		readonly IConfigurationService configurationService;
 		public SaveAttachmentsViewModelBase Model;
 		public Genesyslab.Enterprise.Model.Interaction.IEmailInteraction enterpriseEmailInteraction;
-        public Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email.IInteractionEmail interactionEmail;
+        //public Genesyslab.Desktop.Modules.OpenMedia.Model.Interactions.Email.IInteractionEmail interactionEmail;
 
         // for calls from ContactDirectory History tab
         public bool isCalledFromHistory;
@@ -110,12 +110,12 @@ namespace Adventus.Modules.Email
 			                    return true;	// stop execution of command chain
 			                }
 
-			                IInteractionEmail interactionEmail = interaction as IInteractionEmail;
-			                if(interactionEmail == null)
-			                {
-								ShowAndLogErrorMsg("Interaction is not of IInteractionEmail type. Email saving terminated.");
-			                    return true;	// stop execution of command chain
-			                }
+			     //           IInteractionEmail interactionEmail = interaction as IInteractionEmail;
+			     //           if(interactionEmail == null)
+			     //           {
+								//ShowAndLogErrorMsg("Interaction is not of IInteractionEmail type. Email saving terminated.");
+			     //               return true;	// stop execution of command chain
+			     //           }
 
                             //enterpriseEmailInteraction = interactionEmail.EntrepriseEmailInteractionCurrent;
                             enterpriseEmailInteraction = service.GetInteractionContent(channel, interaction.EntrepriseInteractionCurrent.Id, Genesyslab.Enterprise.Services.DataSourceType.Main) as Genesyslab.Enterprise.Model.Interaction.IEmailInteraction;
