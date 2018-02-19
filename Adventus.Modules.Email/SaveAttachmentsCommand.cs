@@ -245,10 +245,11 @@ namespace Adventus.Modules.Email
                         {
                             if ((channel != null) && (channel.State == ChannelState.Opened))
                             {
+                                // WindowsOptions.Default.Emailattachmentdownloadtimeout = 0x00004e20 = 20000 = 20 sec.
                                 IAttachment attachment = service.GetAttachment(channel, aw.Attachment.Id, (Genesyslab.Enterprise.Services.DataSourceType)Model.Dst, WindowsOptions.Default.Emailattachmentdownloadtimeout);
                                 if (attachment != null)
                                 {
-                                    string dest = Path.Combine(OutputFolderName, attachment.Name);
+                                    string dest = Path.Combine(OutputFolderName, RemoveSpecialChars(attachment.Name));
                                     try
                                     {
                                         FileStream stream = new FileInfo(dest).Open(FileMode.Create, FileAccess.Write);
@@ -257,15 +258,25 @@ namespace Adventus.Modules.Email
                                     }
                                     catch(Exception ex)
                                     {
-                                        MessageBox.Show("Exception downloading attached file {0}", attachment.Name);
+                                        ShowAndLogErrorMsg(String.Format("Exception downloading from UCS attachment {0}", attachment.Name));
                                         continue;
                                     }
                                     Model.EmailPartsPath.Add(dest);
                                 }
                                 else
                                 {
-                                    MessageBox.Show("Can't download attached file {0}", attachment.Name);
+                                    ShowAndLogErrorMsg(String.Format("Can't download from UCS attachment {0}", attachment.Name));
                                 }
+                            }
+                            else
+                            if (channel == null)
+                            {
+                                ShowAndLogErrorMsg(String.Format("Channel to UCS does not exist"));
+                            }
+                            else
+                            if(channel.State != ChannelState.Opened)
+                            {
+                                ShowAndLogErrorMsg(String.Format("Channel to UCS is not opened"));
                             }
                         }
                     }
