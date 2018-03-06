@@ -4,6 +4,7 @@ using System;
 using Genesyslab.Platform.Contacts.Protocols.ContactServer.Requests;
 using Genesyslab.Platform.Contacts.Protocols.ContactServer;
 using Genesyslab.Platform.Contacts.Protocols.ContactServer.Events;
+using System.IO;
 
 namespace InteractionWorkspaceHelper
 {
@@ -83,6 +84,9 @@ namespace InteractionWorkspaceHelper
             AttachmentList attachmentList = eventGetIxnContent.Attachments;
             InteractionContent interactionContent = eventGetIxnContent.InteractionContent;
             pr.CloseUCSConnection(ucsConnection);
+            string s = pr.SaveEMLBinaryContent(interactionContent, Environment.GetFolderPath(Environment.SpecialFolder.Desktop));
+            if (s != String.Empty)
+                Console.WriteLine(s);
             Environment.Exit(0);
         }
 
@@ -97,6 +101,23 @@ namespace InteractionWorkspaceHelper
                 ucsConnection.Dispose();
             }
         }
+
+        private string SaveEMLBinaryContent(InteractionContent interactionContent, string path)
+        {
+            try
+            {
+                string s = path + "\\attachment_test.eml";
+                File.WriteAllBytes(s, interactionContent.Content);
+                //if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
+            }
+            catch (Exception ex)
+            {
+                //ShowAndLogErrorMsg(String.Format("Cannot Save File {0}: {1}", path, ex.ToString()));
+                return ex.Message;
+            }
+            return String.Empty;
+        }
+
 
 
         //private void ShowAndLogErrorMsg(string s)
