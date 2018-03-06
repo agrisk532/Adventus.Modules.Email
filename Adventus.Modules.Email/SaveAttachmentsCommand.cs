@@ -22,6 +22,8 @@ using System.Net.Mail;
 using Genesyslab.Desktop.Modules.Windows.Views.Common.AttachmentView;
 using Genesyslab.Enterprise.Model.Contact;
 using Genesyslab.Desktop.Modules.Windows;
+//using System.IO.MemoryMappedFiles;
+//using InteractionWorkspaceHelper;
 
 namespace Adventus.Modules.Email
 {
@@ -145,6 +147,34 @@ namespace Adventus.Modules.Email
 					ShowAndLogErrorMsg("Type error. Email saving terminated.");
 					return true;
 				}
+
+                ////// BEGIN IPC test
+
+                //const int MMF_MAX_SIZE = 1024;  // allocated memory for this memory mapped file (bytes)
+                //const int MMF_VIEW_SIZE = 1024; // how many bytes of the allocated memory can this process access
+
+                //// creates the memory mapped file which allows 'Reading' and 'Writing'
+                //MemoryMappedFile mmf = MemoryMappedFile.CreateOrOpen("mmf1", MMF_MAX_SIZE, MemoryMappedFileAccess.ReadWrite);
+
+                //// creates a stream for this process, which allows it to write data from offset 0 to 1024 (whole memory)
+                //MemoryMappedViewStream mmvStream = mmf.CreateViewStream(0, MMF_VIEW_SIZE);
+
+                //// this is what we want to write to the memory mapped file
+                //FileWriter.Message message1 = new Message();
+                //message1.title = "test";
+                //message1.content = "hello world";
+
+                //// serialize the variable 'message1' and write it to the memory mapped file
+                //BinaryFormatter formatter = new BinaryFormatter();
+                //formatter.Serialize(mmvStream, message1);
+                //mmvStream.Seek(0, SeekOrigin.Begin); // sets the current position back to the beginning of the stream
+
+                //// the memory mapped file lives as long as this process is running
+                ////while (true) ;
+
+                ////// END IPC test
+
+
 
                 // get subjectLength
                 subjectLength = GetSubjectLength();
