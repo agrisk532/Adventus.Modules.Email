@@ -5,10 +5,13 @@ using Genesyslab.Platform.Contacts.Protocols.ContactServer.Requests;
 using Genesyslab.Platform.Contacts.Protocols.ContactServer;
 using Genesyslab.Platform.Contacts.Protocols.ContactServer.Events;
 using System.IO;
+using System.IO.MemoryMappedFiles;
+using System.Runtime.Serialization.Formatters.Binary;
+using Adventus.Modules.Email;
 
 namespace InteractionWorkspaceHelper
 {
-    class Program
+    class FileWriter
     {
         static void Main(string[] args)
         {
@@ -40,54 +43,80 @@ namespace InteractionWorkspaceHelper
             //}
 
             // connection to UCS contact server
-            UniversalContactServerProtocol ucsConnection;
             //ucsConnection = new UniversalContactServerProtocol(new Endpoint("UniversalContactServer", "ling.lauteri.inter", 5130));
-            ucsConnection = new UniversalContactServerProtocol(new Endpoint("eS_UniversalContactServer", "genesys1", 6120));
+            UniversalContactServerProtocol ucsConnection = new UniversalContactServerProtocol(new Endpoint("eS_UniversalContactServer", "genesys1", 6120));
             //ucsConnection = new UniversalContactServerProtocol(new Endpoint(appName, host, port));
 
             //ucsConnection.Opened += new EventHandler(ucsConnection_Opened);
             //ucsConnection.Error += new EventHandler(ucsConnection_Error);
             //ucsConnection.Closed += new EventHandler(ucsConnection_Closed);
-            try
+
+            const int MMF_VIEW_SIZE = 4096;
+            MMF_Message message = null;
+
+            System.Diagnostics.Debugger.Break();
+
+            using (MemoryMappedFile mmf = MemoryMappedFile.OpenExisting("adventus_memfile"))
             {
-                ucsConnection.Open();
-            }
-            catch (Exception e)
-            {
-                //ShowAndLogErrorMsg(String.Format("Connection to UniversalContactServer failed. Email saving terminated: {0}", e.ToString()));
-                //ucsConnection.Opened -= new EventHandler(ucsConnection_Opened);
-                //ucsConnection.Error -= new EventHandler(ucsConnection_Error);
-                //ucsConnection.Closed -= new EventHandler(ucsConnection_Closed);
-                //return true;    // stop execution of command chain
+                using (MemoryMappedViewStream stream = mmf.CreateViewStream(0, MMF_VIEW_SIZE))
+                {
+                    BinaryFormatter formatter = new BinaryFormatter();
+
+                    // needed for deserialization
+                    byte[] buffer = new byte[MMF_VIEW_SIZE];
+
+                    stream.Read(buffer, 0, MMF_VIEW_SIZE);
+
+                    // deserializes the buffer & prints the message
+                    message = (MMF_Message)formatter.Deserialize(new MemoryStream(buffer));
+                    //Console.WriteLine(message.title + "\n" + message.content + "\n");
+                }
             }
 
             RequestGetInteractionContent request = new RequestGetInteractionContent();
             //request.InteractionId = enterpriseEmailInteraction.Id;
-            request.InteractionId = "000D0aD8NBBM001Q";
-            request.IncludeBinaryContent = true;
-            request.IncludeAttachments = true;
-            //request.DataSource = new NullableDataSourceType(Model.Dst);
-            request.DataSource = new NullableDataSourceType(Genesyslab.Platform.Contacts.Protocols.ContactServer.DataSourceType.Main);
-
-            //GC.Collect(); // to avoid outofmemory exceptions
-            EventGetInteractionContent eventGetIxnContent = (EventGetInteractionContent)ucsConnection.Request(request);
-
-            Program pr = new Program();
-
-            if (eventGetIxnContent == null)
+            //request.InteractionId = "000D0aD8NBBM001Q";
+            if (message != null)
             {
-                //ShowAndLogErrorMsg("Request to UniversalContactServer failed. Email saving terminated.");
-                //pr.CloseUCSConnection(ucsConnection);
-                //return true;    // stop execution of the command chain
-            }
+                try
+                {
+                    ucsConnection.Open();
+                }
+                catch (Exception e)
+                {
+                    //ShowAndLogErrorMsg(String.Format("Connection to UniversalContactServer failed. Email saving terminated: {0}", e.ToString()));
+                    //ucsConnection.Opened -= new EventHandler(ucsConnection_Opened);
+                    //ucsConnection.Error -= new EventHandler(ucsConnection_Error);
+                    //ucsConnection.Closed -= new EventHandler(ucsConnection_Closed);
+                    //return true;    // stop execution of command chain
+                }
 
-            AttachmentList attachmentList = eventGetIxnContent.Attachments;
-            InteractionContent interactionContent = eventGetIxnContent.InteractionContent;
-            pr.CloseUCSConnection(ucsConnection);
-            string s = pr.SaveEMLBinaryContent(interactionContent, Environment.GetFolderPath(Environment.SpecialFolder.Desktop));
-            if (s != String.Empty)
-                Console.WriteLine(s);
-            Environment.Exit(0);
+                request.InteractionId = message.IntractionId;
+                request.IncludeBinaryContent = true;
+                request.IncludeAttachments = true;
+                //request.DataSource = new NullableDataSourceType(Model.Dst);
+                request.DataSource = new NullableDataSourceType(message.DataSourceType == 0 ? Genesyslab.Platform.Contacts.Protocols.ContactServer.DataSourceType.Main : Genesyslab.Platform.Contacts.Protocols.ContactServer.DataSourceType.Archive);
+
+                //GC.Collect(); // to avoid outofmemory exceptions
+                EventGetInteractionContent eventGetIxnContent = (EventGetInteractionContent)ucsConnection.Request(request);
+
+                FileWriter pr = new FileWriter();
+
+                if (eventGetIxnContent == null)
+                {
+                    //ShowAndLogErrorMsg("Request to UniversalContactServer failed. Email saving terminated.");
+                    //pr.CloseUCSConnection(ucsConnection);
+                    //return true;    // stop execution of the command chain
+                }
+
+                AttachmentList attachmentList = eventGetIxnContent.Attachments;
+                InteractionContent interactionContent = eventGetIxnContent.InteractionContent;
+                pr.CloseUCSConnection(ucsConnection);
+                string s = pr.SaveEMLBinaryContent(interactionContent, message.path);
+                if (s != String.Empty)
+                    Console.WriteLine(s);
+            }
+            //Environment.Exit(0);
         }
 
         private void CloseUCSConnection(UniversalContactServerProtocol ucsConnection)
@@ -106,8 +135,8 @@ namespace InteractionWorkspaceHelper
         {
             try
             {
-                string s = path + "\\attachment_test.eml";
-                File.WriteAllBytes(s, interactionContent.Content);
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                File.WriteAllBytes(path, interactionContent.Content);
                 //if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
             }
             catch (Exception ex)
@@ -134,10 +163,10 @@ namespace InteractionWorkspaceHelper
     }
 
 
-    [Serializable]
-    class Message
-    {
-        public string title;
-        public string content;
-    }
+    //[Serializable]
+    //class MMF_Message
+    //{
+    //    public string IntractionId { get; set; }
+    //    public int DataSourceType { get; set; } // 0 - main, 1 - archive
+    //}
 }

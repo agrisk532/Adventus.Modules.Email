@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2027
+VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adventus.Modules.Email", "Adventus.Modules.Email\Adventus.Modules.Email.csproj", "{9BFC954C-1357-4E2D-975C-7CB2983EEF25}"
 EndProject

@@ -22,6 +22,10 @@ using System.Net.Mail;
 using Genesyslab.Desktop.Modules.Windows.Views.Common.AttachmentView;
 using Genesyslab.Enterprise.Model.Contact;
 using Genesyslab.Desktop.Modules.Windows;
+using System.IO.MemoryMappedFiles;
+using System.Diagnostics;
+using System.Runtime.Serialization.Formatters.Binary;
+//using Genesyslab.Enterprise.Model.Interaction;
 //using System.IO.MemoryMappedFiles;
 //using InteractionWorkspaceHelper;
 
@@ -353,7 +357,7 @@ namespace Adventus.Modules.Email
                 //AttachmentList attachmentList = eventGetIxnContent.Attachments;
                 //InteractionContent interactionContent = eventGetIxnContent.InteractionContent;
 
-                InteractionContent interactionContent = null; // to select correct execution path in SaveBinaryContent()
+                //InteractionContent interactionContent = null; // to select correct execution path in SaveBinaryContent()
 
                 // create and save message
 
@@ -401,7 +405,7 @@ namespace Adventus.Modules.Email
 						if (opt == "eml")
 						{
 						// for inbound email binary content is available. We save it.
-							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, interactionContent);
+							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, enterpriseEmailInteraction, Model.Dst);
                             DeleteAttachments();
                         }
 						else
@@ -412,7 +416,7 @@ namespace Adventus.Modules.Email
 						else
 						{
 							//SaveAttachments(ucsConnection, attachmentList);
-							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, interactionContent);
+							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, enterpriseEmailInteraction, Model.Dst);
 						}
 					}
 					else
@@ -425,7 +429,7 @@ namespace Adventus.Modules.Email
 						// for outbound emails binary content is not available. We must assemble it from agent created parts. This is not the email finally sent out by the business process.
 						// for this option == eml, store attachments, assemble message including attachments, delete attachments
 							//SaveAttachments(ucsConnection, attachmentList);
-							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, interactionContent);
+							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, enterpriseEmailInteraction, Model.Dst);
 							DeleteAttachments();
 						}
 						else
@@ -436,7 +440,7 @@ namespace Adventus.Modules.Email
 						else
 						{
 							//SaveAttachments(ucsConnection, attachmentList);
-							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, interactionContent);
+							SaveBinaryContent(messageFrom, messageTo, messageCc, messageBcc, messageText, structuredMessageText, emlFilePath, enterpriseEmailInteraction, Model.Dst);
 						}
 					}
 					else
@@ -516,12 +520,14 @@ namespace Adventus.Modules.Email
 			}
 		}
 
-		private void SaveBinaryContent(string messageFrom, string[] messageTo, string[] messageCc, string[] messageBcc, string messageText, string structuredMessageText, string emlFilePath, InteractionContent interactionContent)
+		private void SaveBinaryContent(string messageFrom, string[] messageTo, string[] messageCc, string[] messageBcc, string messageText, string structuredMessageText, string emlFilePath,
+                Genesyslab.Enterprise.Model.Interaction.IEmailInteraction emi, Genesyslab.Platform.Contacts.Protocols.ContactServer.DataSourceType dst)
 		{
 			// Binary content available. That is for incoming emails. They already have traveled the Business Process (URS).
-			if (interactionContent != null && interactionContent.Content != null)
+			string direction = emi.GetAttributeInteraction("InteractionType") as string;
+            if (direction != null && direction == "Inbound")
 			{
-				SaveEMLBinaryContent(interactionContent, emlFilePath);
+				SaveEMLBinaryContent(emi.Id, dst, emlFilePath);
 			}
 			// Binary content not available. That is for outgoing emails, since email composed by agent may not be the final version sent out by Genesys. It can be changed by Business Process (URS).
 			// Here we save email created by agent.
@@ -637,11 +643,47 @@ namespace Adventus.Modules.Email
 			}
 		}
 
-		private void SaveEMLBinaryContent(InteractionContent interactionContent, string path)
+		private void SaveEMLBinaryContent(string interactionId, Genesyslab.Platform.Contacts.Protocols.ContactServer.DataSourceType dst, string path)
 		{
-			try
+            const int MMF_VIEW_SIZE = 4096;
+            try
 			{
-				File.WriteAllBytes(path, interactionContent.Content);
+                using (MemoryMappedFile mmf = MemoryMappedFile.CreateOrOpen("adventus_memfile", MMF_VIEW_SIZE))
+                {
+                    using (MemoryMappedViewStream stream = mmf.CreateViewStream())
+                    {
+                        BinaryWriter writer = new BinaryWriter(stream);
+                        MMF_Message mmfm = new MMF_Message();
+                        mmfm.IntractionId = interactionId;
+                        if (dst == Genesyslab.Platform.Contacts.Protocols.ContactServer.DataSourceType.Main)
+                            mmfm.DataSourceType = 0;
+                        else
+                            mmfm.DataSourceType = 1;    // archive
+                        mmfm.path = path;
+                        BinaryFormatter formatter = new BinaryFormatter();
+                        formatter.Serialize(stream, mmfm);
+                        stream.Seek(0, SeekOrigin.Begin);
+                    }
+
+                    log.Info ("Starting the InteractionWorkspaceHelper.exe process...");
+                    // Command line args are separated by a space
+                    Process p = Process.Start("InteractionWorkspaceHelper.exe", "adventus_memfile");
+
+                    //Console.WriteLine("Waiting child to die");
+
+                    p.WaitForExit();
+                    //Console.WriteLine("Child died");
+
+                    //using (MemoryMappedViewStream stream = mmf.CreateViewStream())
+                    //{
+                    //    BinaryReader reader = new BinaryReader(stream);
+                    //    Console.WriteLine("Result:" + reader.ReadInt32());
+                    //}
+                }
+                //Console.WriteLine("Press any key to continue...");
+                //Console.ReadKey();
+
+                //File.WriteAllBytes(path, interactionContent.Content);
 				if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
 			}
 			catch (Exception ex)
@@ -801,7 +843,15 @@ namespace Adventus.Modules.Email
 			MessageBox.Show(METHOD_NAME + s, "Attention");
 			log.Info(METHOD_NAME + s);
 		}
-	}
+    }
+
+    [Serializable]
+    public class MMF_Message
+    {
+        public string IntractionId { get; set; }
+        public int DataSourceType { get; set; } // 0 - main, 1 - archive
+        public string path { get; set; }
+    }
 
     class AttachmentWrapper
     {
