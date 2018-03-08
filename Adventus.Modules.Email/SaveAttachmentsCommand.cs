@@ -65,7 +65,12 @@ namespace Adventus.Modules.Email
 		private const string DEFAULT_SUBJECT_LENGTH = "25";		// default value for option CONFIG_OPTION_NAME_EMAIL_SAVE_SUBJECT_LENGTH
 		private const string METHOD_NAME = "Adventus.Modules.Email.SaveAttachmentsCommand(): ";
 
-		// constructor
+        // from the config server
+        public string UCSAppName;
+        public string UCSHost;
+        public string UCSPort;
+
+        // constructor
         public SaveAttachmentsCommand(IObjectContainer container, ILogger logger)
         {
 			this.container = container;
@@ -152,34 +157,6 @@ namespace Adventus.Modules.Email
 					return true;
 				}
 
-                ////// BEGIN IPC test
-
-                //const int MMF_MAX_SIZE = 1024;  // allocated memory for this memory mapped file (bytes)
-                //const int MMF_VIEW_SIZE = 1024; // how many bytes of the allocated memory can this process access
-
-                //// creates the memory mapped file which allows 'Reading' and 'Writing'
-                //MemoryMappedFile mmf = MemoryMappedFile.CreateOrOpen("mmf1", MMF_MAX_SIZE, MemoryMappedFileAccess.ReadWrite);
-
-                //// creates a stream for this process, which allows it to write data from offset 0 to 1024 (whole memory)
-                //MemoryMappedViewStream mmvStream = mmf.CreateViewStream(0, MMF_VIEW_SIZE);
-
-                //// this is what we want to write to the memory mapped file
-                //FileWriter.Message message1 = new Message();
-                //message1.title = "test";
-                //message1.content = "hello world";
-
-                //// serialize the variable 'message1' and write it to the memory mapped file
-                //BinaryFormatter formatter = new BinaryFormatter();
-                //formatter.Serialize(mmvStream, message1);
-                //mmvStream.Seek(0, SeekOrigin.Begin); // sets the current position back to the beginning of the stream
-
-                //// the memory mapped file lives as long as this process is running
-                ////while (true) ;
-
-                ////// END IPC test
-
-
-
                 // get subjectLength
                 subjectLength = GetSubjectLength();
 
@@ -233,13 +210,13 @@ namespace Adventus.Modules.Email
 					//var ServerInformation = statServer[0].ConnectionParameters[0].ServerInformation;
 					var contactServer = cfg.AvailableConnections.Where(item => item.Type.Equals(Genesyslab.Platform.Configuration.Protocols.Types.CfgAppType.CFGContactServer)).ToList();
 					var serverInformation = contactServer[0].ConnectionParameters[0].ServerInformation;
-					var appName = contactServer[0].Name;
-					var host = serverInformation.ConnectedHost.Name;
-					var s_port = serverInformation.ConnectedPort;
+					UCSAppName = contactServer[0].Name;
+					UCSHost = serverInformation.ConnectedHost.Name;
+					UCSPort = serverInformation.ConnectedPort;
 					int port;
-		            if (!Int32.TryParse(s_port, out port))
+		            if (!Int32.TryParse(UCSPort, out port))
 					{
-						ShowAndLogErrorMsg(String.Format("Configured contact server port cannot be converted to int: {0}. Email not saved.", s_port));
+						ShowAndLogErrorMsg(String.Format("Configured contact server port cannot be converted to int: {0}. Email not saved.", UCSPort));
 						return true;	// Cannot parse server port. Stop execution of the command chain.
 					}
 
@@ -646,9 +623,10 @@ namespace Adventus.Modules.Email
 		private void SaveEMLBinaryContent(string interactionId, Genesyslab.Platform.Contacts.Protocols.ContactServer.DataSourceType dst, string path)
 		{
             const int MMF_VIEW_SIZE = 4096;
+            Process p = null;
             try
 			{
-                using (MemoryMappedFile mmf = MemoryMappedFile.CreateOrOpen("adventus_memfile", MMF_VIEW_SIZE))
+                using (MemoryMappedFile mmf = MemoryMappedFile.CreateOrOpen("adventus_wde_memfile", MMF_VIEW_SIZE))
                 {
                     using (MemoryMappedViewStream stream = mmf.CreateViewStream())
                     {
@@ -660,37 +638,61 @@ namespace Adventus.Modules.Email
                         else
                             mmfm.DataSourceType = 1;    // archive
                         mmfm.path = path;
+                        mmfm.UCSappName = this.UCSAppName;
+                        mmfm.UCSHost = this.UCSHost;
+                        mmfm.UCSPort = Int32.Parse(UCSPort);
+
                         BinaryFormatter formatter = new BinaryFormatter();
                         formatter.Serialize(stream, mmfm);
                         stream.Seek(0, SeekOrigin.Begin);
                     }
 
                     log.Info ("Starting the InteractionWorkspaceHelper.exe process...");
-                    // Command line args are separated by a space
-                    Process p = Process.Start("InteractionWorkspaceHelper.exe", "adventus_memfile");
-
-                    //Console.WriteLine("Waiting child to die");
-
+                    p = Process.Start("InteractionWorkspaceHelper.exe", "adventus_wde_memfile");
                     p.WaitForExit();
-                    //Console.WriteLine("Child died");
-
-                    //using (MemoryMappedViewStream stream = mmf.CreateViewStream())
-                    //{
-                    //    BinaryReader reader = new BinaryReader(stream);
-                    //    Console.WriteLine("Result:" + reader.ReadInt32());
-                    //}
+                    if (p.HasExited)
+                    {
+                        if (p.ExitCode != 0)
+                        {
+                            string s = String.Empty;
+                            switch(p.ExitCode)
+                            {
+                                case 1:
+                                    s = String.Format("Child process connection to UniversalContactServer failed. Email saving terminated.");
+                                    break;
+                                case 2:
+                                    s = String.Format("Child process request to UniversalContactServer failed. Email saving terminated.");
+                                    break;
+                                case 3:
+                                    s = String.Format("Child process file write error {0}. Email saving terminated.", path);
+                                    break;
+                                case 4:
+                                    s = String.Format("Child process error in connection to UCS. Email saving terminated.");
+                                    break;
+                                default:
+                                    break;
+                            }
+                            ShowAndLogErrorMsg(s);
+                        }
+                        else
+                        {
+                            if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
+                        }
+                    }
                 }
-                //Console.WriteLine("Press any key to continue...");
-                //Console.ReadKey();
-
-                //File.WriteAllBytes(path, interactionContent.Content);
-				if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
 			}
 			catch (Exception ex)
 			{
 				ShowAndLogErrorMsg(String.Format("Cannot Save File {0}: {1}", path, ex.ToString()));
 			}
-		}
+            finally
+            {
+                if (p != null)
+                {
+                    p.Close();
+                }
+            }
+        }
 
 		private void SaveAttachments(UniversalContactServerProtocol ucsConnection, AttachmentList attachmentList)
 		{
@@ -850,7 +852,10 @@ namespace Adventus.Modules.Email
     {
         public string IntractionId { get; set; }
         public int DataSourceType { get; set; } // 0 - main, 1 - archive
-        public string path { get; set; }
+        public string path { get; set; } // where to store the file
+        public string UCSappName { get; set; }  // from config server
+        public string UCSHost { get; set; }
+        public int UCSPort { get; set; }
     }
 
     class AttachmentWrapper
