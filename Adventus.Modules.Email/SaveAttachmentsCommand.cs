@@ -612,7 +612,7 @@ namespace Adventus.Modules.Email
 					}
 					catch (Exception e)
 					{
-						ShowAndLogErrorMsg("Invalid format email " + type + " address : '{0}'");
+						ShowAndLogErrorMsg(String.Format("Invalid format email " + type + " address : '{0}'"));
 						continue;
 					}
 					ial.Add(new MailboxAddress(ma.DisplayName, ma.Address));
@@ -624,6 +624,20 @@ namespace Adventus.Modules.Email
 		{
             const int MMF_VIEW_SIZE = 4096;
             Process p = null;
+
+            try
+            {
+                foreach (Process proc in Process.GetProcessesByName("InteractionWorkspaceHelper.exe"))
+                {
+                    proc.Kill();
+                    log.Info(String.Format("Existing child process InteractionWorkspaceHelper.exe killed"));
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowAndLogErrorMsg(String.Format("Cannot kill existing child process. Email saving aborted: {0}", ex.ToString()));
+            }
+
             try
 			{
                 using (MemoryMappedFile mmf = MemoryMappedFile.CreateOrOpen("adventus_wde_memfile", MMF_VIEW_SIZE))

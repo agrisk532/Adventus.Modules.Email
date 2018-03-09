@@ -13,7 +13,7 @@ namespace InteractionWorkspaceHelper
 {
     class FileWriter
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             const int MMF_VIEW_SIZE = 4096;
             MMF_Message message = null;
@@ -50,7 +50,7 @@ namespace InteractionWorkspaceHelper
                 }
                 catch (Exception e)
                 {
-                    Environment.Exit(1);
+                    return 1;
                 }
 
                 request.InteractionId = message.IntractionId;
@@ -63,7 +63,7 @@ namespace InteractionWorkspaceHelper
                 if (eventGetIxnContent == null)
                 {
                     pr.CloseUCSConnection(ucsConnection);
-                    Environment.Exit(2);    //ShowAndLogErrorMsg("Request to UniversalContactServer failed. Email saving terminated.");
+                    return 2;    //ShowAndLogErrorMsg("Request to UniversalContactServer failed. Email saving terminated.");
                 }
 
                 AttachmentList attachmentList = eventGetIxnContent.Attachments;
@@ -71,9 +71,9 @@ namespace InteractionWorkspaceHelper
                 pr.CloseUCSConnection(ucsConnection);
                 string s = pr.SaveEMLBinaryContent(interactionContent, message.path);
                 if (s != String.Empty)
-                    Environment.Exit(3);
+                    return 3;
             }
-            Environment.Exit(0);
+            return 0;
         }
 
         private void CloseUCSConnection(UniversalContactServerProtocol ucsConnection)
