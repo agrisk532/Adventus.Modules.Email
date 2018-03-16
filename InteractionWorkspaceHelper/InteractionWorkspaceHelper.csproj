@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{C16D49C6-DD06-45EF-9041-D02AAB0576C9}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>InteractionWorkspaceHelper</RootNamespace>
+    <RootNamespace>Adventus.Modules.InteractionWorkspaceHelper</RootNamespace>
     <AssemblyName>InteractionWorkspaceHelper</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -78,6 +78,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(ProjectDir)\bin\debug\InteractionWorkspaceHelper*" "$(ProjectDir)\..\Adventus.Modules.Email\bin\debug"</PostBuildEvent>
+    <PostBuildEvent>copy "$(ProjectDir)\bin\debug\InteractionWorkspaceHelper*" "$(ProjectDir)\..\Adventus.Modules.Email\bin\$(ConfigurationName)"</PostBuildEvent>
   </PropertyGroup>
 </Project>

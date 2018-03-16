@@ -11,9 +11,6 @@ using Genesyslab.Desktop.Modules.Core.Model.Interactions;
 using Genesyslab.Platform.Commons.Protocols;
 using Genesyslab.Platform.Commons.Logging;
 using Genesyslab.Platform.Contacts.Protocols;
-using Genesyslab.Platform.Contacts.Protocols.ContactServer;
-using Genesyslab.Platform.Contacts.Protocols.ContactServer.Requests;
-using Genesyslab.Platform.Contacts.Protocols.ContactServer.Events;
 using Genesyslab.Desktop.Modules.Core.SDK.Configurations;
 using Genesyslab.Enterprise.Model.ServiceModel;
 using Genesyslab.Enterprise.Services;
@@ -25,9 +22,6 @@ using Genesyslab.Desktop.Modules.Windows;
 using System.IO.MemoryMappedFiles;
 using System.Diagnostics;
 using System.Runtime.Serialization.Formatters.Binary;
-//using Genesyslab.Enterprise.Model.Interaction;
-//using System.IO.MemoryMappedFiles;
-//using InteractionWorkspaceHelper;
 
 namespace Adventus.Modules.Email
 {
@@ -151,7 +145,7 @@ namespace Adventus.Modules.Email
                 {
                     MessageBox.Show(ex.Message);
                 }
-				catch(Exception e)
+				catch(Exception)
 				{
 					ShowAndLogErrorMsg("Type error. Email saving terminated.");
 					return true;
@@ -267,7 +261,7 @@ namespace Adventus.Modules.Email
                                         stream.Write(attachment.Content, 0, attachment.Size.Value);
                                         stream.Close();
                                     }
-                                    catch(Exception ex)
+                                    catch(Exception)
                                     {
                                         ShowAndLogErrorMsg(String.Format("Exception downloading from UCS attachment {0}", attachment.Name));
                                         continue;
@@ -349,7 +343,7 @@ namespace Adventus.Modules.Email
 					{
 						messageTo = enterpriseEmailInteraction.To;
 					}
-					catch (Exception e)
+					catch (Exception)
 					{
 						MessageBox.Show("Please enter message recipient", "Attention");
 						//CloseUCSConnection(ucsConnection);  // <- TODO
@@ -427,8 +421,6 @@ namespace Adventus.Modules.Email
 						return true;	// stop execution of command chain
 					}
 
-					//CloseUCSConnection(ucsConnection);
-
 					// show info in a messagebox
 					Model.EmailPartsInfoStored = true;
 					StringBuilder sb = new StringBuilder();
@@ -447,8 +439,10 @@ namespace Adventus.Modules.Email
 						sb.AppendLine(Model.EmailPartsPath[i]);
 						sb.AppendLine();
 					}
-					//MessageBox.Show(sb.ToString(), "Information");
-					Model.Clear();
+                    #if DEBUG
+					MessageBox.Show(sb.ToString(), "Information");
+                    #endif
+                Model.Clear();
 					return false;
 			}
         }
@@ -525,7 +519,7 @@ namespace Adventus.Modules.Email
 				{
 					from = new MailAddress(messageFrom);
 				}
-				catch (Exception e)
+				catch (Exception)
 				{
 					ShowAndLogErrorMsg(String.Format("Invalid format email From address : '{0}'", messageFrom));
 					from = new MailAddress("unknown@address.com", " Unknown From address");
@@ -610,7 +604,7 @@ namespace Adventus.Modules.Email
 					{
 						ma = new MailAddress(str);
 					}
-					catch (Exception e)
+					catch (Exception)
 					{
 						ShowAndLogErrorMsg(String.Format("Invalid format email " + type + " address : '{0}'"));
 						continue;
@@ -638,13 +632,14 @@ namespace Adventus.Modules.Email
                 ShowAndLogErrorMsg(String.Format("Cannot kill existing child process. Email saving aborted: {0}", ex.ToString()));
             }
 
+            string child_stdout = String.Empty;
+
             try
 			{
                 using (MemoryMappedFile mmf = MemoryMappedFile.CreateOrOpen("adventus_wde_memfile", MMF_VIEW_SIZE))
                 {
                     using (MemoryMappedViewStream stream = mmf.CreateViewStream())
                     {
-                        BinaryWriter writer = new BinaryWriter(stream);
                         MMF_Message mmfm = new MMF_Message();
                         mmfm.IntractionId = interactionId;
                         if (dst == Genesyslab.Platform.Contacts.Protocols.ContactServer.DataSourceType.Main)
@@ -662,36 +657,69 @@ namespace Adventus.Modules.Email
                     }
 
                     log.Info ("Starting the InteractionWorkspaceHelper.exe process...");
-                    p = Process.Start("InteractionWorkspaceHelper.exe", "adventus_wde_memfile");
+                    StringBuilder outputStringBuilder = new StringBuilder();
+                    p = new Process();
+                    p.StartInfo.UseShellExecute = false;
+                    p.StartInfo.RedirectStandardOutput = true;
+                    p.StartInfo.FileName = "InteractionWorkspaceHelper.exe";
+                    p.StartInfo.Arguments = "adventus_wde_memfile";
+                    try
+                    {
+                        p.Start();
+                    }
+                    catch (Exception e)
+                    {
+                        if (e.Message == "The system cannot find the file specified")
+                        {
+                            ShowAndLogErrorMsg("InteractionWorkspaceHelper.exe file missing, .eml file saving not possible.");
+                            return;
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                    child_stdout = p.StandardOutput.ReadToEnd().Trim();
                     p.WaitForExit();
                     if (p.HasExited)
                     {
-                        if (p.ExitCode != 0)
+                        string ret = String.Empty;
+                        if (child_stdout != "0")
                         {
-                            string s = String.Empty;
-                            switch(p.ExitCode)
+                            switch(child_stdout)
                             {
-                                case 1:
-                                    s = String.Format("Child process connection to UniversalContactServer failed. Email saving terminated.");
+                                case "1":
+                                    ret = String.Format("InteractionWorkspaceHelper.exe: Connection open to UniversalContactServer failed. Email saving terminated.");
                                     break;
-                                case 2:
-                                    s = String.Format("Child process request to UniversalContactServer failed. Email saving terminated.");
+                                case "2":
+                                    ret = String.Format("InteractionWorkspaceHelper.exe: Request to UniversalContactServer failed. Email saving terminated.");
                                     break;
-                                case 3:
-                                    s = String.Format("Child process file write error {0}. Email saving terminated.", path);
+                                case "3":
+                                    ret = String.Format("InteractionWorkspaceHelper.exe: File write error {0}. Email saving terminated.", path);
                                     break;
-                                case 4:
-                                    s = String.Format("Child process error in connection to UCS. Email saving terminated.");
+                                case "4":
+                                    ret = String.Format("InteractionWorkspaceHelper.exe: Could not find mmf. Email saving terminated.");
+                                    break;
+                                case "5":
+                                    ret = String.Format("InteractionWorkspaceHelper.exe: Error in connection to UCS. Email saving terminated.");
+                                    break;
+                                case "6":
+                                    ret = String.Format("InteractionWorkspaceHelper.exe: No data passed from parent to child process. Email saving terminated.");
                                     break;
                                 default:
+                                    ret = child_stdout;
                                     break;
                             }
-                            ShowAndLogErrorMsg(s);
+                            ShowAndLogErrorMsg(ret);
                         }
                         else
                         {
                             if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
                         }
+                    }
+                    else
+                    {
+                        ShowAndLogInfoMsg(String.Format("Warning: Child process has not exited."));
                     }
                 }
 			}
@@ -703,42 +731,43 @@ namespace Adventus.Modules.Email
             {
                 if (p != null)
                 {
-                    p.Close();
+                    p.Dispose();
                 }
             }
+            log.Info(String.Format("Exiting from the InteractionWorkspaceHelper.exe process with return code {0}", child_stdout));
         }
 
-		private void SaveAttachments(UniversalContactServerProtocol ucsConnection, AttachmentList attachmentList)
-		{
-			List<string> attachmentNames = new List<string>();  // for adding to message body
-			if (attachmentList != null)
-			{
-				foreach (Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachment in attachmentList)
-				{
-					attachmentNames.Add(attachment.TheName);
-				}
+		//private void SaveAttachments(UniversalContactServerProtocol ucsConnection, AttachmentList attachmentList)
+		//{
+		//	List<string> attachmentNames = new List<string>();  // for adding to message body
+		//	if (attachmentList != null)
+		//	{
+		//		foreach (Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachment in attachmentList)
+		//		{
+		//			attachmentNames.Add(attachment.TheName);
+		//		}
 
-				// check for attachments with the same name
-				List<string> duplicates = attachmentNames.GroupBy(x => x.ToLower())
-					.Where(x => x.Count() > 1)
-					.Select(x => x.Key)
-					.ToList();
+		//		// check for attachments with the same name
+		//		List<string> duplicates = attachmentNames.GroupBy(x => x.ToLower())
+		//			.Where(x => x.Count() > 1)
+		//			.Select(x => x.Key)
+		//			.ToList();
 
-				attachmentNames.Clear();
+		//		attachmentNames.Clear();
 
-				foreach (Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachment in attachmentList)
-				{
-					string documentName = attachment.TheName;
-					if (duplicates.Contains(documentName, StringComparer.OrdinalIgnoreCase))
-					{
-						documentName = attachment.DocumentId + "_" + documentName;
-					}
-					documentName = RemoveSpecialChars(documentName);
-					//attachmentNames.Add(documentName); // for adding to message body
-					DownloadAndSaveAttachment(ucsConnection, attachment.DocumentId, documentName);  // Saves Attachment on disk. Document path also saved in Model.EmailPartsPath
-				}
-			}
-		}
+		//		foreach (Genesyslab.Platform.Contacts.Protocols.ContactServer.Attachment attachment in attachmentList)
+		//		{
+		//			string documentName = attachment.TheName;
+		//			if (duplicates.Contains(documentName, StringComparer.OrdinalIgnoreCase))
+		//			{
+		//				documentName = attachment.DocumentId + "_" + documentName;
+		//			}
+		//			documentName = RemoveSpecialChars(documentName);
+		//			//attachmentNames.Add(documentName); // for adding to message body
+		//			DownloadAndSaveAttachment(ucsConnection, attachment.DocumentId, documentName);  // Saves Attachment on disk. Document path also saved in Model.EmailPartsPath
+		//		}
+		//	}
+		//}
 
 		// Mangle Subject
 		private string GetSubjectTrimmed()
@@ -756,7 +785,7 @@ namespace Adventus.Modules.Email
 			{
 				defaultDirectory = Util.GetConfigurationOption(CONFIG_SECTION_NAME_EMAIL_SAVE, CONFIG_OPTION_NAME_EMAIL_SAVE_PATH, container, METHOD_NAME);
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
 				defaultDirectory = SetDesktopOutputFolder();
 				log.Info(string.Format(METHOD_NAME + "Output folder configuration option not defined. Using a Desktop folder."));
@@ -800,34 +829,34 @@ namespace Adventus.Modules.Email
  *  \param attachmentGraphic contains data about attachment
  *  \return full path of attachment on disk
  */       
-        public string DownloadAndSaveAttachment(UniversalContactServerProtocol ucsConnection, string documentId, string documentName)
-        {
-			string path = Path.Combine(OutputFolderName, documentName);
+   //     public string DownloadAndSaveAttachment(UniversalContactServerProtocol ucsConnection, string documentId, string documentName)
+   //     {
+			//string path = Path.Combine(OutputFolderName, documentName);
 
-			RequestGetDocument request = new RequestGetDocument();
-			request.DocumentId = documentId;
-			request.IncludeBinaryContent = true;
-			request.DataSource = new NullableDataSourceType(Model.Dst);
+			//RequestGetDocument request = new RequestGetDocument();
+			//request.DocumentId = documentId;
+			//request.IncludeBinaryContent = true;
+			//request.DataSource = new NullableDataSourceType(Model.Dst);
 
-			EventGetDocument eventGetDoc = (EventGetDocument)ucsConnection.Request(request);
-			if (eventGetDoc == null)
-			{
-				ShowAndLogErrorMsg(String.Format("Attachment download from the UniversalContactServer failed. Save operation skipped."));
-				return null;
-			}
+			//EventGetDocument eventGetDoc = (EventGetDocument)ucsConnection.Request(request);
+			//if (eventGetDoc == null)
+			//{
+			//	ShowAndLogErrorMsg(String.Format("Attachment download from the UniversalContactServer failed. Save operation skipped."));
+			//	return null;
+			//}
 
-			try
-			{
-				File.WriteAllBytes(path, eventGetDoc.Content);
-				if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
-			}
-			catch (Exception exception)
-            {
-				ShowAndLogErrorMsg(String.Format("Exception at saving attachment. Path: {0}. {1}\nOperation skipped.", path, exception.Message));
-				return null;
-            }
-            return null;
-        }
+			//try
+			//{
+			//	File.WriteAllBytes(path, eventGetDoc.Content);
+			//	if (!Model.EmailPartsInfoStored) Model.EmailPartsPath.Add(path);
+			//}
+			//catch (Exception exception)
+   //         {
+			//	ShowAndLogErrorMsg(String.Format("Exception at saving attachment. Path: {0}. {1}\nOperation skipped.", path, exception.Message));
+			//	return null;
+   //         }
+   //         return null;
+   //     }
 
 		/** \brief removes special and whitespace chars from filename 
 		 *  \param src source string

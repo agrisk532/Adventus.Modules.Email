@@ -41,7 +41,7 @@ namespace Adventus.Modules.Email
 						log.Info(String.Format(METHOD_NAME + "User level configuration option {0} not defined. Trying to read application level option.", option));
 					}
 				}
-		        catch (Exception ex)
+		        catch (Exception)
 		        {
 					// fall through to the application options
 					log.Info(String.Format(METHOD_NAME + "Exception: User level configuration option {0} not defined. Trying to read application level option.", option));
@@ -69,7 +69,7 @@ namespace Adventus.Modules.Email
 						log.Info(String.Format(METHOD_NAME + "Application level configuration option {0} not defined.", option));
 					}
 				}
-				catch (Exception e)
+				catch (Exception)
 				{
 					opt = null;
 					log.Info(String.Format(METHOD_NAME + "Exception: reading application level configuration option {0}", option));

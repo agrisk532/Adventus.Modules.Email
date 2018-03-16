@@ -96,7 +96,7 @@ namespace Adventus.Modules.Email
 					);
 					isButtonRegisteredInRegion = true;
 				}
-				catch(Exception e)
+				catch(Exception)
 				{
 					isButtonRegisteredInRegion = false;
 				}
