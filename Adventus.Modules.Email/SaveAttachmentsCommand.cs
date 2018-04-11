@@ -120,7 +120,7 @@ namespace Adventus.Modules.Email
                             //enterpriseEmailInteraction = interactionEmail.EntrepriseEmailInteractionCurrent;
                             enterpriseEmailInteraction = service.GetInteractionContent(channel, interaction.EntrepriseInteractionCurrent.Id, Genesyslab.Enterprise.Services.DataSourceType.Main) as Genesyslab.Enterprise.Model.Interaction.IEmailInteraction;
                             Model = m;
-							//isCalledFromHistory = false;
+							isCalledFromHistory = false;
 						}
 						else
 						if(mH != null)	// ISaveAttachmentsViewModelH used (interaction from history)
@@ -496,7 +496,7 @@ namespace Adventus.Modules.Email
 		{
 			// Binary content available. That is for incoming emails. They already have traveled the Business Process (URS).
 			string direction = emi.GetAttributeInteraction("InteractionType") as string;
-            if (direction != null && direction == "Inbound")
+            if (isCalledFromHistory || direction != null && direction == "Inbound")
 			{
 				SaveEMLBinaryContent(emi.Id, dst, emlFilePath);
 			}
