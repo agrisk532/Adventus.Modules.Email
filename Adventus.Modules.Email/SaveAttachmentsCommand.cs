@@ -225,10 +225,11 @@ namespace Adventus.Modules.Email
                     foreach (IAttachment attachment in attachments)
                     {
                         AttachmentWrapper aw = new AttachmentWrapper(attachment, false);
-                        string src = Path.Combine(str, attachment.Id, attachment.Name);
+                        log.Debug(String.Format("*** Looking for file {0}\\{1}\\{2} in Workspace tmp folder", str, attachment.Id, RemoveSpecialChars(attachment.Name)));
+                        string src = Path.Combine(str, attachment.Id, RemoveSpecialChars(attachment.Name));
                         if (File.Exists(src))
                         {
-                            string dest = Path.Combine(OutputFolderName, attachment.Name);
+                            string dest = Path.Combine(OutputFolderName, RemoveSpecialChars(attachment.Name));
                             try
                             {
                                 File.Copy(src, dest, true);
@@ -263,14 +264,14 @@ namespace Adventus.Modules.Email
                                     }
                                     catch(Exception)
                                     {
-                                        ShowAndLogErrorMsg(String.Format("Exception downloading from UCS attachment {0}", attachment.Name));
+                                        ShowAndLogErrorMsg(String.Format("Exception downloading from UCS attachment {0}", RemoveSpecialChars(attachment.Name)));
                                         continue;
                                     }
                                     Model.EmailPartsPath.Add(dest);
                                 }
                                 else
                                 {
-                                    ShowAndLogErrorMsg(String.Format("Can't download from UCS attachment {0}", attachment.Name));
+                                    ShowAndLogErrorMsg(String.Format("Can't download from UCS attachment {0}", RemoveSpecialChars(attachment.Name)));
                                 }
                             }
                             else
