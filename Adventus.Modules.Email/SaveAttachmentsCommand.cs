@@ -245,7 +245,23 @@ namespace Adventus.Modules.Email
                         aws.Add(aw);
                     }
 
-                    foreach(AttachmentWrapper aw in aws)
+                    List<string> attachmentNames = new List<string>();  // for adding to message body
+                    List<string> duplicates = new List<string>();
+                    if (attachments != null)
+                    {
+                        foreach (IAttachment attachment in attachments)
+                        {
+                            attachmentNames.Add(attachment.Name);
+                        }
+
+                        // check for attachments with the same name
+                        duplicates = attachmentNames.GroupBy(x => x.ToLower())
+                            .Where(x => x.Count() > 1)
+                            .Select(x => x.Key)
+                            .ToList();
+                    }
+
+                foreach (AttachmentWrapper aw in aws)
                     {
                         if (!aw.IsCopied)
                         {
@@ -255,7 +271,13 @@ namespace Adventus.Modules.Email
                                 IAttachment attachment = service.GetAttachment(channel, aw.Attachment.Id, (Genesyslab.Enterprise.Services.DataSourceType)Model.Dst, WindowsOptions.Default.Emailattachmentdownloadtimeout);
                                 if (attachment != null)
                                 {
-                                    string dest = Path.Combine(OutputFolderName, RemoveSpecialChars(attachment.Name));
+                                    string documentName = attachment.Name;
+                                    if (duplicates.Contains(documentName, StringComparer.OrdinalIgnoreCase))
+                                    {
+                                        documentName = attachment.Id + "_" + documentName;
+                                    }
+
+                                    string dest = Path.Combine(OutputFolderName, RemoveSpecialChars(documentName));
                                     try
                                     {
                                         FileStream stream = new FileInfo(dest).Open(FileMode.Create, FileAccess.Write);
