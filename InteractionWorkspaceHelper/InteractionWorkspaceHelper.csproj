@@ -37,21 +37,27 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Genesyslab.Platform.Commons">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Commons.dll</HintPath>
     </Reference>
     <Reference Include="Genesyslab.Platform.Commons.Collections">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Commons.Collections.dll</HintPath>
     </Reference>
     <Reference Include="Genesyslab.Platform.Commons.Connection">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Commons.Connection.dll</HintPath>
     </Reference>
     <Reference Include="Genesyslab.Platform.Commons.Protocols">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Commons.Protocols.dll</HintPath>
     </Reference>
     <Reference Include="Genesyslab.Platform.Contacts.Protocols">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.Contacts.Protocols.dll</HintPath>
     </Reference>
     <Reference Include="Genesyslab.Platform.OpenMedia.Protocols">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\GCTI\Workspace Desktop Edition\Genesyslab.Platform.OpenMedia.Protocols.dll</HintPath>
     </Reference>
     <Reference Include="System" />
